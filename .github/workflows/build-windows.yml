@@ -26,12 +26,54 @@ jobs:
     - name: Get dependencies
       run: flutter pub get
     
-    - name: Build Windows application
-      run: flutter build windows
+    - name: Build Windows (Release)
+      run: flutter build windows --release
+    
+    - name: List build outputs
+      shell: pwsh
+      run: |
+        Write-Host "Listing build/windows:"
+        if (Test-Path build/windows) {
+          Get-ChildItem -Recurse build/windows | ForEach-Object { $_.FullName }
+        } else {
+          Write-Host "build/windows does not exist"
+        }
+    
+    - name: Find Release directory
+      id: find_release
+      shell: pwsh
+      run: |
+        $candidates = @(
+          "build/windows/x64/runner/Release",
+          "build/windows/runner/Release"
+        )
+        $found = $false
+        foreach ($p in $candidates) {
+          if (Test-Path $p) {
+            Write-Host "Found release dir: $p"
+            "release_dir=$p" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+            $found = $true
+            break
+          }
+        }
+        if (-not $found) {
+          Write-Error "Release directory not found."
+          exit 1
+        }
+    
+    - name: Zip artifact
+      shell: pwsh
+      run: |
+        $src = "${{ steps.find_release.outputs.release_dir }}"
+        $zip = "windows-build.zip"
+        Write-Host "Zipping $src to $zip"
+        if (Test-Path $zip) { Remove-Item $zip -Force }
+        Compress-Archive -Path "$src/*" -DestinationPath $zip
+        Write-Host "Done."
     
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
         name: windows-build
-        path: build/windows/runner/Release/
+        path: windows-build.zip
         retention-days: 30 
