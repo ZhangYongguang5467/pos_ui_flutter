@@ -1,0 +1,515 @@
+# Create Cart
+curl --location 'http://localhost:8003/api/v1/carts?terminal_id=demo_tenant-STORE001-1' \
+--header 'X-API-Key: 1px1jTk-rSxJVQB0A89o_N4stNUN_hi22gj9fqtnw4U' \
+--header 'Content-Type: application/json' \
+--data '{
+  "transaction_type": 101,
+  "user_id": "99",
+  "user_name": "John Doe"
+}'
+
+{
+    "success": true,
+    "code": 201,
+    "message": "Cart Created. cart_id: ce15d404-9875-4fc1-9487-42eea827e7b0",
+    "userError": null,
+    "data": {
+        "cartId": "ce15d404-9875-4fc1-9487-42eea827e7b0"
+    },
+    "metadata": null,
+    "operation": "create_cart"
+}
+
+
+# Add Product to Cart
+curl --location 'http://localhost:8003/api/v1/carts/ce15d404-9875-4fc1-9487-42eea827e7b0/lineItems?terminal_id=demo_tenant-STORE001-1' \
+--header 'X-API-Key: 1px1jTk-rSxJVQB0A89o_N4stNUN_hi22gj9fqtnw4U' \
+--header 'Content-Type: application/json' \
+--data '[
+  {
+    "item_code": "COFFEE001",
+    "quantity": 2,
+    "unit_price": 25.00
+  }
+]'
+
+{
+    "success": true,
+    "code": 200,
+    "message": "Items added to cart. cart_id: ce15d404-9875-4fc1-9487-42eea827e7b0",
+    "userError": null,
+    "data": {
+        "tenantId": "demo_tenant",
+        "storeCode": "STORE001",
+        "storeName": "演示店铺",
+        "terminalNo": 1,
+        "totalAmount": 50.0,
+        "totalAmountWithTax": 55.0,
+        "totalQuantity": 2,
+        "totalDiscountAmount": 0.0,
+        "depositAmount": 0.0,
+        "changeAmount": 0.0,
+        "stampDutyAmount": 0.0,
+        "receiptNo": -1,
+        "transactionNo": -1,
+        "transactionType": 101,
+        "businessDate": null,
+        "generateDateTime": null,
+        "lineItems": [
+            {
+                "lineNo": 1,
+                "itemCode": "COFFEE001",
+                "itemName": "美式咖啡",
+                "unitPrice": 25.0,
+                "unitPriceOriginal": 0.0,
+                "isUnitPriceChanged": false,
+                "quantity": 2,
+                "amount": 50.0,
+                "discounts": [],
+                "imageUrls": [],
+                "isCancelled": false
+            }
+        ],
+        "payments": [],
+        "taxes": [
+            {
+                "taxNo": 1,
+                "taxCode": "01",
+                "taxType": "External",
+                "taxName": "外税10%",
+                "taxAmount": 5.0,
+                "targetAmount": 50.0,
+                "targetQuantity": 2
+            }
+        ],
+        "subtotalDiscounts": [],
+        "receiptText": "",
+        "journalText": null,
+        "staff": {
+            "id": "STF001",
+            "name": "演示员工"
+        },
+        "status": null,
+        "cartId": "ce15d404-9875-4fc1-9487-42eea827e7b0",
+        "cartStatus": "EnteringItem",
+        "subtotalAmount": 50.0,
+        "balanceAmount": 55.0
+    },
+    "metadata": null,
+    "operation": "add_items"
+}
+
+# Add Items to Cart
+curl --location 'http://localhost:8003/api/v1/carts/ce15d404-9875-4fc1-9487-42eea827e7b0/lineItems?terminal_id=demo_tenant-STORE001-1' \
+--header 'X-API-Key: 1px1jTk-rSxJVQB0A89o_N4stNUN_hi22gj9fqtnw4U' \
+--header 'Content-Type: application/json' \
+--data '[
+  {
+    "item_code": "SANDWICH001",
+    "quantity": 1,
+    "unit_price": 35.00
+  }
+]'
+
+{
+    "success": true,
+    "code": 200,
+    "message": "Items added to cart. cart_id: 2d8e7072-e665-4a86-bf52-b6b9c2418703",
+    "userError": null,
+    "data": {
+        "tenantId": "demo_tenant",
+        "storeCode": "STORE001",
+        "storeName": "演示店铺",
+        "terminalNo": 1,
+        "totalAmount": 85.0,
+        "totalAmountWithTax": 93.0,
+        "totalQuantity": 3,
+        "totalDiscountAmount": 0.0,
+        "depositAmount": 0.0,
+        "changeAmount": 0.0,
+        "stampDutyAmount": 0.0,
+        "receiptNo": -1,
+        "transactionNo": -1,
+        "transactionType": 101,
+        "businessDate": null,
+        "generateDateTime": null,
+        "lineItems": [
+            {
+                "lineNo": 1,
+                "itemCode": "COFFEE001",
+                "itemName": "美式咖啡",
+                "unitPrice": 25.0,
+                "unitPriceOriginal": 0.0,
+                "isUnitPriceChanged": false,
+                "quantity": 2,
+                "amount": 50.0,
+                "discounts": [],
+                "imageUrls": [],
+                "isCancelled": false
+            },
+            {
+                "lineNo": 2,
+                "itemCode": "SANDWICH001",
+                "itemName": "火腿三明治",
+                "unitPrice": 35.0,
+                "unitPriceOriginal": 0.0,
+                "isUnitPriceChanged": false,
+                "quantity": 1,
+                "amount": 35.0,
+                "discounts": [],
+                "imageUrls": [],
+                "isCancelled": false
+            }
+        ],
+        "payments": [],
+        "taxes": [
+            {
+                "taxNo": 1,
+                "taxCode": "01",
+                "taxType": "External",
+                "taxName": "外税10%",
+                "taxAmount": 8.0,
+                "targetAmount": 85.0,
+                "targetQuantity": 3
+            }
+        ],
+        "subtotalDiscounts": [],
+        "receiptText": "",
+        "journalText": null,
+        "staff": {
+            "id": "STF001",
+            "name": "演示员工"
+        },
+        "status": null,
+        "cartId": "2d8e7072-e665-4a86-bf52-b6b9c2418703",
+        "cartStatus": "EnteringItem",
+        "subtotalAmount": 85.0,
+        "balanceAmount": 93.0
+    },
+    "metadata": null,
+    "operation": "add_items"
+}
+
+# Get Cart
+curl --location 'http://localhost:8003/api/v1/carts/ce15d404-9875-4fc1-9487-42eea827e7b0?terminal_id=demo_tenant-STORE001-1' \
+--header 'X-API-Key: 1px1jTk-rSxJVQB0A89o_N4stNUN_hi22gj9fqtnw4U'
+
+{
+    "success": true,
+    "code": 200,
+    "message": "Cart found. cart_id: ce15d404-9875-4fc1-9487-42eea827e7b0",
+    "userError": null,
+    "data": {
+        "tenantId": "demo_tenant",
+        "storeCode": "STORE001",
+        "storeName": "演示店铺",
+        "terminalNo": 1,
+        "totalAmount": 50.0,
+        "totalAmountWithTax": 55.0,
+        "totalQuantity": 2,
+        "totalDiscountAmount": 0.0,
+        "depositAmount": 0.0,
+        "changeAmount": 0.0,
+        "stampDutyAmount": 0.0,
+        "receiptNo": -1,
+        "transactionNo": -1,
+        "transactionType": 101,
+        "businessDate": null,
+        "generateDateTime": null,
+        "lineItems": [
+            {
+                "lineNo": 1,
+                "itemCode": "COFFEE001",
+                "itemName": "美式咖啡",
+                "unitPrice": 25.0,
+                "unitPriceOriginal": 0.0,
+                "isUnitPriceChanged": false,
+                "quantity": 2,
+                "amount": 50.0,
+                "discounts": [],
+                "imageUrls": [],
+                "isCancelled": false
+            }
+        ],
+        "payments": [],
+        "taxes": [
+            {
+                "taxNo": 1,
+                "taxCode": "01",
+                "taxType": "External",
+                "taxName": "外税10%",
+                "taxAmount": 5.0,
+                "targetAmount": 50.0,
+                "targetQuantity": 2
+            }
+        ],
+        "subtotalDiscounts": [],
+        "receiptText": "",
+        "journalText": null,
+        "staff": {
+            "id": "STF001",
+            "name": "演示员工"
+        },
+        "status": null,
+        "cartId": "ce15d404-9875-4fc1-9487-42eea827e7b0",
+        "cartStatus": "EnteringItem",
+        "subtotalAmount": 50.0,
+        "balanceAmount": 55.0
+    },
+    "metadata": null,
+    "operation": "get_cart"
+}
+
+# Get Subtotal
+curl --location 'http://localhost:8003/api/v1/carts/ce15d404-9875-4fc1-9487-42eea827e7b0/subtotal?terminal_id=demo_tenant-STORE001-1' \
+--header 'X-API-Key: 1px1jTk-rSxJVQB0A89o_N4stNUN_hi22gj9fqtnw4U' \
+--header 'Content-Type: application/json' \
+--data '{}'
+
+{
+    "success": true,
+    "code": 200,
+    "message": "Subtotal calculated. cart_id: ce15d404-9875-4fc1-9487-42eea827e7b0",
+    "userError": null,
+    "data": {
+        "tenantId": "demo_tenant",
+        "storeCode": "STORE001",
+        "storeName": "演示店铺",
+        "terminalNo": 1,
+        "totalAmount": 50.0,
+        "totalAmountWithTax": 55.0,
+        "totalQuantity": 2,
+        "totalDiscountAmount": 0.0,
+        "depositAmount": 0.0,
+        "changeAmount": 0.0,
+        "stampDutyAmount": 0.0,
+        "receiptNo": -1,
+        "transactionNo": -1,
+        "transactionType": 101,
+        "businessDate": null,
+        "generateDateTime": null,
+        "lineItems": [
+            {
+                "lineNo": 1,
+                "itemCode": "COFFEE001",
+                "itemName": "美式咖啡",
+                "unitPrice": 25.0,
+                "unitPriceOriginal": 0.0,
+                "isUnitPriceChanged": false,
+                "quantity": 2,
+                "amount": 50.0,
+                "discounts": [],
+                "imageUrls": [],
+                "isCancelled": false
+            }
+        ],
+        "payments": [],
+        "taxes": [
+            {
+                "taxNo": 1,
+                "taxCode": "01",
+                "taxType": "External",
+                "taxName": "外税10%",
+                "taxAmount": 5.0,
+                "targetAmount": 50.0,
+                "targetQuantity": 2
+            }
+        ],
+        "subtotalDiscounts": [],
+        "receiptText": "",
+        "journalText": null,
+        "staff": {
+            "id": "STF001",
+            "name": "演示员工"
+        },
+        "status": null,
+        "cartId": "ce15d404-9875-4fc1-9487-42eea827e7b0",
+        "cartStatus": "Paying",
+        "subtotalAmount": 50.0,
+        "balanceAmount": 55.0
+    },
+    "metadata": null,
+    "operation": "subtotal"
+}
+
+# Add Payment to Cart
+curl --location 'http://localhost:8003/api/v1/carts/ce15d404-9875-4fc1-9487-42eea827e7b0/payments?terminal_id=demo_tenant-STORE001-1' \
+--header 'X-API-Key: 1px1jTk-rSxJVQB0A89o_N4stNUN_hi22gj9fqtnw4U' \
+--header 'Content-Type: application/json' \
+--data '[
+  {
+    "paymentCode": "01",
+    "amount": 100.00,
+    "detail": "Cash payment"
+  }
+]'
+{
+    "success": true,
+    "code": 200,
+    "message": "Payment processed. cart_id: ce15d404-9875-4fc1-9487-42eea827e7b0",
+    "userError": null,
+    "data": {
+        "tenantId": "demo_tenant",
+        "storeCode": "STORE001",
+        "storeName": "演示店铺",
+        "terminalNo": 1,
+        "totalAmount": 50.0,
+        "totalAmountWithTax": 55.0,
+        "totalQuantity": 2,
+        "totalDiscountAmount": 0.0,
+        "depositAmount": 100.0,
+        "changeAmount": 45.0,
+        "stampDutyAmount": 0.0,
+        "receiptNo": -1,
+        "transactionNo": -1,
+        "transactionType": 101,
+        "businessDate": null,
+        "generateDateTime": null,
+        "lineItems": [
+            {
+                "lineNo": 1,
+                "itemCode": "COFFEE001",
+                "itemName": "美式咖啡",
+                "unitPrice": 25.0,
+                "unitPriceOriginal": 0.0,
+                "isUnitPriceChanged": false,
+                "quantity": 2,
+                "amount": 50.0,
+                "discounts": [],
+                "imageUrls": [],
+                "isCancelled": false
+            }
+        ],
+        "payments": [
+            {
+                "paymentNo": 1,
+                "paymentCode": "01",
+                "paymentName": "现金支付",
+                "paymentAmount": 55.0,
+                "paymentDetail": "Cash payment"
+            }
+        ],
+        "taxes": [
+            {
+                "taxNo": 1,
+                "taxCode": "01",
+                "taxType": "External",
+                "taxName": "外税10%",
+                "taxAmount": 5.0,
+                "targetAmount": 50.0,
+                "targetQuantity": 2
+            }
+        ],
+        "subtotalDiscounts": [],
+        "receiptText": "",
+        "journalText": null,
+        "staff": {
+            "id": "STF001",
+            "name": "演示员工"
+        },
+        "status": null,
+        "cartId": "ce15d404-9875-4fc1-9487-42eea827e7b0",
+        "cartStatus": "Paying",
+        "subtotalAmount": 50.0,
+        "balanceAmount": 0.0
+    },
+    "metadata": null,
+    "operation": "payments"
+}
+
+# Get Bill
+curl --location 'http://localhost:8003/api/v1/carts/ce15d404-9875-4fc1-9487-42eea827e7b0/bill?terminal_id=demo_tenant-STORE001-1' \
+--header 'X-API-Key: 1px1jTk-rSxJVQB0A89o_N4stNUN_hi22gj9fqtnw4U' \
+--header 'Content-Type: application/json' \
+--data '{}'
+
+
+curl 'http://localhost:8003/api/v1/carts/ebcf1225-f373-4be2-8b13-04101d12f5eb/bill?token=123&terminal_id=demo_tenant-STORE001-1' \
+  -H 'Accept: application/json, text/plain, */*' \
+  -H 'Accept-Language: en,zh-CN;q=0.9,zh;q=0.8' \
+  -H 'Connection: keep-alive' \
+  -H 'Content-Type: application/json' \
+  -H 'Origin: http://localhost:8007' \
+  -H 'Referer: http://localhost:8007/' \
+  -H 'Sec-Fetch-Dest: empty' \
+  -H 'Sec-Fetch-Mode: cors' \
+  -H 'Sec-Fetch-Site: same-site' \
+  -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36' \
+  -H 'X-API-Key: 1px1jTk-rSxJVQB0A89o_N4stNUN_hi22gj9fqtnw4U' \
+  -H 'sec-ch-ua: "Not)A;Brand";v="8", "Chromium";v="138", "Google Chrome";v="138"' \
+  -H 'sec-ch-ua-mobile: ?0' \
+  -H 'sec-ch-ua-platform: "macOS"' \
+  --data-raw '{}'
+{
+    "success": true,
+    "code": 200,
+    "message": "Bill processed. cart_id: ce15d404-9875-4fc1-9487-42eea827e7b0",
+    "userError": null,
+    "data": {
+        "tenantId": "demo_tenant",
+        "storeCode": "STORE001",
+        "storeName": "演示店铺",
+        "terminalNo": 1,
+        "totalAmount": 50.0,
+        "totalAmountWithTax": 55.0,
+        "totalQuantity": 2,
+        "totalDiscountAmount": 0.0,
+        "depositAmount": 100.0,
+        "changeAmount": 45.0,
+        "stampDutyAmount": 0.0,
+        "receiptNo": 111112,
+        "transactionNo": 2,
+        "transactionType": 101,
+        "businessDate": null,
+        "generateDateTime": null,
+        "lineItems": [
+            {
+                "lineNo": 1,
+                "itemCode": "COFFEE001",
+                "itemName": "美式咖啡",
+                "unitPrice": 25.0,
+                "unitPriceOriginal": 0.0,
+                "isUnitPriceChanged": false,
+                "quantity": 2,
+                "amount": 50.0,
+                "discounts": [],
+                "imageUrls": [],
+                "isCancelled": false
+            }
+        ],
+        "payments": [
+            {
+                "paymentNo": 1,
+                "paymentCode": "01",
+                "paymentName": "现金支付",
+                "paymentAmount": 55.0,
+                "paymentDetail": "Cash payment"
+            }
+        ],
+        "taxes": [
+            {
+                "taxNo": 1,
+                "taxCode": "01",
+                "taxType": "External",
+                "taxName": "外税10%",
+                "taxAmount": 5.0,
+                "targetAmount": 50.0,
+                "targetQuantity": 2
+            }
+        ],
+        "subtotalDiscounts": [],
+        "receiptText": "<?xml version=\"1.0\" ?>\n<PrintData>\n\t<Page>\n\t\t<Line type=\"Text\" align=\"Split\">\n\t\t\t<Item1>レジNo. 1</Item1>\n\t\t\t<Item2>責# STF001</Item2>\n\t\t</Line>\n\t\t<Line type=\"Text\" align=\"Left\">\n\t\t\t2025年08月07日(木) 15:11\n\t\t\t<Item1/>\n\t\t\t<Item2/>\n\t\t</Line>\n\t\t<Line type=\"Text\" align=\"Center\">\n\t\t\t【 領 収 証 】\n\t\t\t<Item1/>\n\t\t\t<Item2/>\n\t\t</Line>\n\t\t<Line type=\"Line\" align=\"\">\n\t\t\t<Item1/>\n\t\t\t<Item2/>\n\t\t</Line>\n\t\t<Line type=\"Text\" align=\"Split\">\n\t\t\t<Item1>美式咖啡</Item1>\n\t\t\t<Item2>50外</Item2>\n\t\t</Line>\n\t\t<Line type=\"Text\" align=\"Left\">\n\t\t\t        2 個@25\n\t\t\t<Item1/>\n\t\t\t<Item2/>\n\t\t</Line>\n\t\t<Line type=\"Line\" align=\"\">\n\t\t\t<Item1/>\n\t\t\t<Item2/>\n\t\t</Line>\n\t\t<Line type=\"Text\" align=\"Split\">\n\t\t\t<Item1>小計            2 個</Item1>\n\t\t\t<Item2>\\50  </Item2>\n\t\t</Line>\n\t\t<Line type=\"Text\" align=\"Split\">\n\t\t\t<Item1>  外税10%</Item1>\n\t\t\t<Item2>\\5  </Item2>\n\t\t</Line>\n\t\t<Line type=\"Text\" align=\"Split\">\n\t\t\t<Item1>合計</Item1>\n\t\t\t<Item2>\\55  </Item2>\n\t\t</Line>\n\t\t<Line type=\"Text\" align=\"Split\">\n\t\t\t<Item1>  (外税10% 対象額</Item1>\n\t\t\t<Item2>\\50)  </Item2>\n\t\t</Line>\n\t\t<Line type=\"Text\" align=\"Split\">\n\t\t\t<Item1>  (外税10%</Item1>\n\t\t\t<Item2>\\5)  </Item2>\n\t\t</Line>\n\t\t<Line type=\"Text\" align=\"Split\">\n\t\t\t<Item1>お預り</Item1>\n\t\t\t<Item2>\\100  </Item2>\n\t\t</Line>\n\t\t<Line type=\"Text\" align=\"Split\">\n\t\t\t<Item1>お釣り</Item1>\n\t\t\t<Item2>\\45  </Item2>\n\t\t</Line>\n\t\t<Line type=\"Line\" align=\"\">\n\t\t\t<Item1/>\n\t\t\t<Item2/>\n\t\t</Line>\n\t\t<Line type=\"Text\" align=\"Split\">\n\t\t\t<Item1>现金支付</Item1>\n\t\t\t<Item2>\\55  </Item2>\n\t\t</Line>\n\t\t<Line type=\"Line\" align=\"\">\n\t\t\t<Item1/>\n\t\t\t<Item2/>\n\t\t</Line>\n\t\t<Line type=\"Text\" align=\"Left\">\n\t\t\tレシートNo. 111112\n\t\t\t<Item1/>\n\t\t\t<Item2/>\n\t\t</Line>\n\t</Page>\n</PrintData>\n",
+        "journalText": "レジNo. 1             責# STF001\n2025年08月07日(木) 15:11        \n         【 領 収 証 】         \n--------------------------------\n美式咖啡                    50外\n        2 個@25                 \n--------------------------------\n小計            2 個       \\50  \n  外税10%                   \\5  \n合計                       \\55  \n  (外税10% 対象額         \\50)  \n  (外税10%                 \\5)  \nお預り                    \\100  \nお釣り                     \\45  \n--------------------------------\n现金支付                   \\55  \n--------------------------------\nレシートNo. 111112              \n",
+        "staff": {
+            "id": "STF001",
+            "name": "演示员工"
+        },
+        "status": null,
+        "cartId": "ce15d404-9875-4fc1-9487-42eea827e7b0",
+        "cartStatus": "Completed",
+        "subtotalAmount": 50.0,
+        "balanceAmount": 0.0
+    },
+    "metadata": null,
+    "operation": "bill"
+}%
