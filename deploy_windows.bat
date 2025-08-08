@@ -25,8 +25,13 @@ if not exist "%BUILD_DIR%" (
 )
 
 if exist "config.json" (
-    copy "config.json" "%BUILD_DIR%\config.json"
-    echo 配置文件已复制到构建目录
+    if not exist "%BUILD_DIR%\config.json" (
+        copy "config.json" "%BUILD_DIR%\config.json"
+        echo 配置文件已复制到构建目录
+    ) else (
+        echo 注意：构建目录已存在config.json，跳过复制以保留用户配置
+        echo 如需重置配置，请删除 %BUILD_DIR%\config.json 后重新运行此脚本
+    )
 ) else (
     echo 警告：config.json 文件不存在，将使用默认配置
 )

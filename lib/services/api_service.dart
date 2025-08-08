@@ -15,17 +15,26 @@ class ApiService {
 
     try {
       String configContent;
+      bool loadedFromLocal = false;
       
+      // First try to load from local file (for production)
       try {
-        // Try to load from assets first (for development)
-        configContent = await rootBundle.loadString('config.json');
-      } catch (e) {
-        // If that fails, try to load from local file (for production)
         final file = File('config.json');
         if (await file.exists()) {
           configContent = await file.readAsString();
+          loadedFromLocal = true;
+          print('Configuration loaded from local file: config.json');
         } else {
-          throw Exception('config.json not found in assets or current directory');
+          throw Exception('Local config.json not found');
+        }
+      } catch (e) {
+        print('Failed to load local config.json: $e');
+        // Fallback to assets (for development)
+        try {
+          configContent = await rootBundle.loadString('config.json');
+          print('Configuration loaded from assets: config.json');
+        } catch (assetError) {
+          throw Exception('config.json not found in local directory or assets: $assetError');
         }
       }
 
@@ -37,7 +46,8 @@ class ApiService {
       _terminalId = apiConfig['terminalId'];
       _configLoaded = true;
       
-      print('Configuration loaded successfully');
+      print('Configuration loaded successfully from ${loadedFromLocal ? 'local file' : 'assets'}');
+      print('Base URL: $_baseUrl');
     } catch (e) {
       print('Error loading configuration: $e');
       // Fallback to default values
@@ -45,6 +55,7 @@ class ApiService {
       _apiKey = '1px1jTk-rSxJVQB0A89o_N4stNUN_hi22gj9fqtnw4U';
       _terminalId = 'demo_tenant-STORE001-1';
       _configLoaded = true;
+      print('Using default configuration values');
     }
   }
 
