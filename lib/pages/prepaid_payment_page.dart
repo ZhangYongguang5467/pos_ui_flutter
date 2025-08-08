@@ -576,28 +576,63 @@ class _PrepaidPaymentPageState extends State<PrepaidPaymentPage> {
       // Show loading message
       _showLoadingMessage();
 
-      // Calculate payment amount (prepaid + points, max is final total)
-      final paymentAmount = finalTotalAmount.toDouble();
-      
-      // Call payment API
+      // 1) Fetch cart before payment
+      print('[PrepaidPayment] Fetching cart before payment. cartId=${widget.cartId}');
+      final beforeCart = await ApiService.getCart(widget.cartId!);
+      double? serverBalance;
+      if (beforeCart != null) {
+        dynamic bal = beforeCart['balanceAmount'] ?? beforeCart['balance'] ?? beforeCart['remaining'] ?? beforeCart['remainingAmount'];
+        if (bal is num) {
+          serverBalance = bal.toDouble();
+        } else {
+          final dynamic totalWithTax = beforeCart['totalAmountWithTax'];
+          final dynamic deposit = beforeCart['depositAmount'];
+          if (totalWithTax is num) {
+            final double paid = deposit is num ? deposit.toDouble() : 0.0;
+            serverBalance = (totalWithTax.toDouble() - paid);
+            if (serverBalance! < 0) serverBalance = 0.0;
+          }
+        }
+      }
+      print('[PrepaidPayment] Server balance before payment: ' + (serverBalance?.toString() ?? 'null'));
+
+      // 2) Decide payment amount based on server balance if available, otherwise fallback to UI total
+      final double uiAmount = finalTotalAmount.toDouble();
+      final double paymentAmount = (serverBalance != null && serverBalance > 0) ? serverBalance! : uiAmount;
+
+      print('[PrepaidPayment] Using payment amount: ' + paymentAmount.toString());
+
+      // 3) Call payment API
       final paymentData = await ApiService.addPayment(
         cartId: widget.cartId!,
-        paymentCode: '01', // Assuming '01' is for prepaid card payment
+        paymentCode: '01', // prepaid
         amount: paymentAmount,
-        detail: 'Prepaid card payment with ${usedPoints > 0 ? '$usedPoints points' : 'no points'}',
+        detail: 'Prepaid card payment with ' + (usedPoints > 0 ? ('$usedPoints points') : 'no points'),
       );
 
       // Hide loading message
       ScaffoldMessenger.of(context).clearSnackBars();
 
       if (paymentData != null) {
+        // 4) Verify cart after payment
+        print('[PrepaidPayment] Payment success, verifying cart after payment...');
+        final afterCart = await ApiService.getCart(widget.cartId!);
+        double afterBalance = -1;
+        if (afterCart != null) {
+          final dynamic balanceValue = afterCart['balance'] ?? afterCart['remaining'] ?? afterCart['remainingAmount'];
+          if (balanceValue is num) {
+            afterBalance = balanceValue.toDouble();
+          }
+        }
+        print('[PrepaidPayment] Server balance after payment: ' + afterBalance.toString());
+
         // Show success message
         _showSuccessMessage();
-        
+
         // Wait a moment before navigation
         await Future.delayed(const Duration(milliseconds: 2000));
-        
-        // Navigate to completion page
+
+        // 5) Navigate to completion page
         if (mounted) {
           Navigator.push(
             context,
@@ -607,15 +642,17 @@ class _PrepaidPaymentPageState extends State<PrepaidPaymentPage> {
                 prepaidAmount: prepaidBalance,
                 pointsUsed: usedPoints,
                 cashAmount: hasInsufficientFunds ? remainingAmount : 0,
+                cartId: widget.cartId,
               ),
             ),
           );
         }
       } else {
+        print('[PrepaidPayment] Payment API returned null data');
         _showErrorMessage();
       }
     } catch (e) {
-      print('Error processing payment: $e');
+      print('Error processing payment: ' + e.toString());
       ScaffoldMessenger.of(context).clearSnackBars();
       _showErrorMessage();
     }

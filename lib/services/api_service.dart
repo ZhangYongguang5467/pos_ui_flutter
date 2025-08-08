@@ -84,25 +84,37 @@ class ApiService {
     String userName = "John Doe",
   }) async {
     try {
-      // First try the real API
       final baseUrlValue = await baseUrl;
       final terminalIdValue = await terminalId;
       final apiKeyValue = await apiKey;
-      
-      final url = Uri.parse('$baseUrlValue/carts?terminal_id=$terminalIdValue');
-      
-      final response = await http.post(
-        url,
-        headers: {
-          'X-API-Key': apiKeyValue,
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'transaction_type': transactionType,
-          'user_id': userId,
-          'user_name': userName,
-        }),
-      ).timeout(const Duration(seconds: 5));
+
+      final urlString = '$baseUrlValue/carts?terminal_id=$terminalIdValue';
+      final url = Uri.parse(urlString);
+
+      final headers = {
+        'X-API-Key': apiKeyValue,
+        'Content-Type': 'application/json',
+      };
+      final bodyMap = {
+        'transaction_type': transactionType,
+        'user_id': userId,
+        'user_name': userName,
+      };
+      final body = jsonEncode(bodyMap);
+
+      final maskedKey = apiKeyValue.length > 8
+          ? apiKeyValue.substring(0, 4) + '...' + apiKeyValue.substring(apiKeyValue.length - 4)
+          : '***';
+      print('[ApiService.createCart] URL: ' + urlString);
+      print('[ApiService.createCart] Headers: ' + jsonEncode({'X-API-Key': maskedKey, 'Content-Type': headers['Content-Type']}));
+      print('[ApiService.createCart] Body: ' + body);
+
+      final response = await http
+          .post(url, headers: headers, body: body)
+          .timeout(const Duration(seconds: 10));
+
+      print('[ApiService.createCart] Status: ' + response.statusCode.toString());
+      print('[ApiService.createCart] Response: ' + response.body);
 
       if (response.statusCode == 201) {
         final responseData = jsonDecode(response.body);
@@ -131,23 +143,36 @@ class ApiService {
       final baseUrlValue = await baseUrl;
       final terminalIdValue = await terminalId;
       final apiKeyValue = await apiKey;
-      
-      final url = Uri.parse('$baseUrlValue/carts/$cartId/lineItems?terminal_id=$terminalIdValue');
-      
-      final response = await http.post(
-        url,
-        headers: {
-          'X-API-Key': apiKeyValue,
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode([
-          {
-            'item_code': itemCode,
-            'quantity': quantity,
-            'unit_price': unitPrice,
-          }
-        ]),
-      );
+
+      final urlString = '$baseUrlValue/carts/$cartId/lineItems?terminal_id=$terminalIdValue';
+      final url = Uri.parse(urlString);
+
+      final headers = {
+        'X-API-Key': apiKeyValue,
+        'Content-Type': 'application/json',
+      };
+      final bodyMap = [
+        {
+          'item_code': itemCode,
+          'quantity': quantity,
+          'unit_price': unitPrice,
+        }
+      ];
+      final body = jsonEncode(bodyMap);
+
+      final maskedKey = apiKeyValue.length > 8
+          ? apiKeyValue.substring(0, 4) + '...' + apiKeyValue.substring(apiKeyValue.length - 4)
+          : '***';
+      print('[ApiService.addItemToCart] URL: ' + urlString);
+      print('[ApiService.addItemToCart] Headers: ' + jsonEncode({'X-API-Key': maskedKey, 'Content-Type': headers['Content-Type']}));
+      print('[ApiService.addItemToCart] Body: ' + body);
+
+      final response = await http
+          .post(url, headers: headers, body: body)
+          .timeout(const Duration(seconds: 10));
+
+      print('[ApiService.addItemToCart] Status: ' + response.statusCode.toString());
+      print('[ApiService.addItemToCart] Response: ' + response.body);
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
@@ -171,15 +196,24 @@ class ApiService {
       final baseUrlValue = await baseUrl;
       final terminalIdValue = await terminalId;
       final apiKeyValue = await apiKey;
-      
-      final url = Uri.parse('$baseUrlValue/carts/$cartId?terminal_id=$terminalIdValue');
-      
-      final response = await http.get(
-        url,
-        headers: {
-          'X-API-Key': apiKeyValue,
-        },
-      );
+
+      final urlString = '$baseUrlValue/carts/$cartId?terminal_id=$terminalIdValue';
+      final url = Uri.parse(urlString);
+
+      final headers = {
+        'X-API-Key': apiKeyValue,
+      };
+
+      final maskedKey = apiKeyValue.length > 8
+          ? apiKeyValue.substring(0, 4) + '...' + apiKeyValue.substring(apiKeyValue.length - 4)
+          : '***';
+      print('[ApiService.getCart] URL: ' + urlString);
+      print('[ApiService.getCart] Headers: ' + jsonEncode({'X-API-Key': maskedKey}));
+
+      final response = await http.get(url, headers: headers).timeout(const Duration(seconds: 10));
+
+      print('[ApiService.getCart] Status: ' + response.statusCode.toString());
+      print('[ApiService.getCart] Response: ' + response.body);
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
@@ -203,17 +237,29 @@ class ApiService {
       final baseUrlValue = await baseUrl;
       final terminalIdValue = await terminalId;
       final apiKeyValue = await apiKey;
-      
-      final url = Uri.parse('$baseUrlValue/carts/$cartId/subtotal?terminal_id=$terminalIdValue');
-      
-      final response = await http.post(
-        url,
-        headers: {
-          'X-API-Key': apiKeyValue,
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({}),
-      ).timeout(const Duration(seconds: 5));
+
+      final urlString = '$baseUrlValue/carts/$cartId/subtotal?terminal_id=$terminalIdValue';
+      final url = Uri.parse(urlString);
+
+      final headers = {
+        'X-API-Key': apiKeyValue,
+        'Content-Type': 'application/json',
+      };
+      final body = jsonEncode({});
+
+      final maskedKey = apiKeyValue.length > 8
+          ? apiKeyValue.substring(0, 4) + '...' + apiKeyValue.substring(apiKeyValue.length - 4)
+          : '***';
+      print('[ApiService.calculateSubtotal] URL: ' + urlString);
+      print('[ApiService.calculateSubtotal] Headers: ' + jsonEncode({'X-API-Key': maskedKey, 'Content-Type': headers['Content-Type']}));
+      print('[ApiService.calculateSubtotal] Body: ' + body);
+
+      final response = await http
+          .post(url, headers: headers, body: body)
+          .timeout(const Duration(seconds: 10));
+
+      print('[ApiService.calculateSubtotal] Status: ' + response.statusCode.toString());
+      print('[ApiService.calculateSubtotal] Response: ' + response.body);
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
@@ -242,23 +288,36 @@ class ApiService {
       final baseUrlValue = await baseUrl;
       final terminalIdValue = await terminalId;
       final apiKeyValue = await apiKey;
-      
-      final url = Uri.parse('$baseUrlValue/carts/$cartId/payments?terminal_id=$terminalIdValue');
-      
-      final response = await http.post(
-        url,
-        headers: {
-          'X-API-Key': apiKeyValue,
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode([
-          {
-            'paymentCode': paymentCode,
-            'amount': amount,
-            'detail': detail,
-          }
-        ]),
-      ).timeout(const Duration(seconds: 5));
+
+      final urlString = '$baseUrlValue/carts/$cartId/payments?terminal_id=$terminalIdValue';
+      final url = Uri.parse(urlString);
+
+      final headers = {
+        'X-API-Key': apiKeyValue,
+        'Content-Type': 'application/json',
+      };
+      final bodyMap = [
+        {
+          'paymentCode': paymentCode,
+          'amount': amount,
+          'detail': detail,
+        }
+      ];
+      final body = jsonEncode(bodyMap);
+
+      final maskedKey = apiKeyValue.length > 8
+          ? apiKeyValue.substring(0, 4) + '...' + apiKeyValue.substring(apiKeyValue.length - 4)
+          : '***';
+      print('[ApiService.addPayment] URL: ' + urlString);
+      print('[ApiService.addPayment] Headers: ' + jsonEncode({'X-API-Key': maskedKey, 'Content-Type': headers['Content-Type']}));
+      print('[ApiService.addPayment] Body: ' + body);
+
+      final response = await http
+          .post(url, headers: headers, body: body)
+          .timeout(const Duration(seconds: 10));
+
+      print('[ApiService.addPayment] Status: ' + response.statusCode.toString());
+      print('[ApiService.addPayment] Response: ' + response.body);
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
@@ -272,6 +331,57 @@ class ApiService {
       return null;
     } catch (e) {
       print('Error adding payment: $e');
+      return null;
+    }
+  }
+
+  /// Generate bill for cart
+  static Future<Map<String, dynamic>?> generateBill(String cartId) async {
+    try {
+      final baseUrlValue = await baseUrl;
+      final terminalIdValue = await terminalId;
+      final apiKeyValue = await apiKey;
+
+      final urlString = '$baseUrlValue/carts/$cartId/bill?terminal_id=$terminalIdValue';
+      final url = Uri.parse(urlString);
+
+      final headers = {
+        'X-API-Key': apiKeyValue,
+        'Content-Type': 'application/json',
+      };
+      final body = jsonEncode({});
+
+      // Debug logs (mask API key)
+      final maskedKey = apiKeyValue.length > 8
+          ? apiKeyValue.substring(0, 4) + '...' + apiKeyValue.substring(apiKeyValue.length - 4)
+          : '***';
+      print('[ApiService.generateBill] URL: ' + urlString);
+      print('[ApiService.generateBill] Headers: ' + jsonEncode({'X-API-Key': maskedKey, 'Content-Type': headers['Content-Type']}));
+      print('[ApiService.generateBill] Body: ' + body);
+
+      final response = await http
+          .post(
+            url,
+            headers: headers,
+            body: body,
+          )
+          .timeout(const Duration(seconds: 10));
+
+      print('[ApiService.generateBill] Status: ' + response.statusCode.toString());
+      print('[ApiService.generateBill] Response: ' + response.body);
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        if (responseData['success'] == true) {
+          return responseData['data'];
+        }
+      }
+
+      print('Failed to generate bill. Status: ${response.statusCode}');
+      print('Response: ${response.body}');
+      return null;
+    } catch (e) {
+      print('Error generating bill: $e');
       return null;
     }
   }

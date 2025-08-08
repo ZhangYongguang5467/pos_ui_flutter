@@ -1,0 +1,7 @@
+{
+  "api": {
+    "baseUrl": "http://localhost:8003/api/v1",
+    "apiKey": "1px1jTk-rSxJVQB0A89o_N4stNUN_hi22gj9fqtnw4U",
+    "terminalId": "demo_tenant-STORE001-1"
+  }
+} 

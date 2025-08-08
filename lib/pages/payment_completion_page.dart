@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
 
 class PaymentCompletionPage extends StatefulWidget {
   final int totalAmount;
   final int prepaidAmount;
   final int pointsUsed;
   final int cashAmount;
+  final String? cartId;
 
   const PaymentCompletionPage({
     super.key,
@@ -12,6 +14,7 @@ class PaymentCompletionPage extends StatefulWidget {
     required this.prepaidAmount,
     this.pointsUsed = 0,
     this.cashAmount = 0,
+    this.cartId,
   });
 
   @override
@@ -20,11 +23,70 @@ class PaymentCompletionPage extends StatefulWidget {
 
 class _PaymentCompletionPageState extends State<PaymentCompletionPage> {
   int _remainingSeconds = 5;
+  bool _billGenerated = false;
 
   @override
   void initState() {
     super.initState();
     _startCountdownTimer();
+    _generateBillAfterDelay();
+  }
+
+  void _generateBillAfterDelay() {
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted) {
+        _generateBill();
+      }
+    });
+  }
+
+  Future<void> _generateBill() async {
+    if (_billGenerated || widget.cartId == null) {
+      print('[PaymentCompletionPage] Skip generateBill. billGenerated=$_billGenerated, cartId=${widget.cartId}');
+      return;
+    }
+
+    print('[PaymentCompletionPage] Generating bill for cartId=${widget.cartId}');
+    
+    try {
+      final billData = await ApiService.generateBill(widget.cartId!);
+      
+      if (billData != null) {
+        setState(() {
+          _billGenerated = true;
+        });
+        print('[PaymentCompletionPage] Bill generated successfully');
+        _showSuccessMessage();
+      } else {
+        print('[PaymentCompletionPage] Bill generation returned null data');
+        _showErrorMessage();
+      }
+    } catch (e) {
+      print('[PaymentCompletionPage] Error generating bill: $e');
+      _showErrorMessage();
+    }
+  }
+
+  void _showSuccessMessage() {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('請求書が正常に生成されました'),
+        backgroundColor: Colors.green,
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _showErrorMessage() {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('請求書の生成に失敗しました'),
+        backgroundColor: Colors.red,
+        duration: Duration(seconds: 2),
+      ),
+    );
   }
 
   void _startCountdownTimer() {
@@ -101,8 +163,8 @@ class _PaymentCompletionPageState extends State<PaymentCompletionPage> {
             
             // Main content
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(40),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(12),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -111,24 +173,24 @@ class _PaymentCompletionPageState extends State<PaymentCompletionPage> {
                       'ご利用ありがとうございました。',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 36,
+                        fontSize: 32,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 15),
                     
                     // Receipt message
                     const Text(
                       '『領収証』をお取りください',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 28,
+                        fontSize: 24,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     
-                    const SizedBox(height: 80),
+                    const SizedBox(height: 30),
                     
                     // Staff illustration
                     Row(
@@ -142,7 +204,7 @@ class _PaymentCompletionPageState extends State<PaymentCompletionPage> {
                           isMale: true,
                         ),
                         
-                        const SizedBox(width: 100),
+                        const SizedBox(width: 60),
                         
                         // Female staff
                         _buildStaffAvatar(
@@ -154,7 +216,7 @@ class _PaymentCompletionPageState extends State<PaymentCompletionPage> {
                       ],
                     ),
                     
-                    const SizedBox(height: 80),
+                    const SizedBox(height: 20),
                   ],
                 ),
               ),
@@ -172,14 +234,14 @@ class _PaymentCompletionPageState extends State<PaymentCompletionPage> {
     required bool isMale,
   }) {
     return Container(
-      width: 200,
-      height: 250,
+      width: 160,
+      height: 200,
       child: Column(
         children: [
           // Head
           Container(
-            width: 80,
-            height: 80,
+            width: 64,
+            height: 64,
             decoration: BoxDecoration(
               color: const Color(0xFFFFDBB5), // Skin color
               shape: BoxShape.circle,
@@ -189,26 +251,26 @@ class _PaymentCompletionPageState extends State<PaymentCompletionPage> {
                 // Hair
                 Positioned(
                   top: 0,
-                  left: 10,
-                  right: 10,
+                  left: 8,
+                  right: 8,
                   child: Container(
-                    height: 40,
+                    height: 32,
                     decoration: BoxDecoration(
                       color: hairColor,
                       borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(40),
-                        topRight: Radius.circular(40),
+                        topLeft: Radius.circular(32),
+                        topRight: Radius.circular(32),
                       ),
                     ),
                   ),
                 ),
                 // Eyes
                 Positioned(
-                  top: 25,
-                  left: 20,
+                  top: 20,
+                  left: 16,
                   child: Container(
-                    width: 8,
-                    height: 8,
+                    width: 6,
+                    height: 6,
                     decoration: const BoxDecoration(
                       color: Colors.black,
                       shape: BoxShape.circle,
@@ -216,11 +278,11 @@ class _PaymentCompletionPageState extends State<PaymentCompletionPage> {
                   ),
                 ),
                 Positioned(
-                  top: 25,
-                  right: 20,
+                  top: 20,
+                  right: 16,
                   child: Container(
-                    width: 8,
-                    height: 8,
+                    width: 6,
+                    height: 6,
                     decoration: const BoxDecoration(
                       color: Colors.black,
                       shape: BoxShape.circle,
@@ -229,11 +291,11 @@ class _PaymentCompletionPageState extends State<PaymentCompletionPage> {
                 ),
                 // Mouth (smile)
                 Positioned(
-                  top: 45,
-                  left: 30,
-                  right: 30,
+                  top: 36,
+                  left: 24,
+                  right: 24,
                   child: Container(
-                    height: 8,
+                    height: 6,
                     decoration: BoxDecoration(
                       color: Colors.red[300],
                       borderRadius: BorderRadius.circular(10),
@@ -244,18 +306,18 @@ class _PaymentCompletionPageState extends State<PaymentCompletionPage> {
             ),
           ),
           
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           
           // Body
           Container(
-            width: 120,
-            height: 160,
+            width: 96,
+            height: 128,
             child: Stack(
               children: [
                 // Shirt
                 Container(
-                  width: 120,
-                  height: 100,
+                  width: 96,
+                  height: 80,
                   decoration: BoxDecoration(
                     color: shirtColor,
                     borderRadius: BorderRadius.circular(8),
@@ -263,8 +325,8 @@ class _PaymentCompletionPageState extends State<PaymentCompletionPage> {
                 ),
                 // Apron
                 Container(
-                  width: 120,
-                  height: 120,
+                  width: 96,
+                  height: 96,
                   decoration: BoxDecoration(
                     color: apronColor,
                     borderRadius: BorderRadius.circular(8),
@@ -274,7 +336,7 @@ class _PaymentCompletionPageState extends State<PaymentCompletionPage> {
                       'TRIAL',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 16,
+                        fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -282,26 +344,26 @@ class _PaymentCompletionPageState extends State<PaymentCompletionPage> {
                 ),
                 // Arms
                 Positioned(
-                  top: 20,
-                  left: -20,
+                  top: 16,
+                  left: -16,
                   child: Container(
-                    width: 30,
-                    height: 80,
+                    width: 24,
+                    height: 64,
                     decoration: BoxDecoration(
                       color: shirtColor,
-                      borderRadius: BorderRadius.circular(15),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                 ),
                 Positioned(
-                  top: 20,
-                  right: -20,
+                  top: 16,
+                  right: -16,
                   child: Container(
-                    width: 30,
-                    height: 80,
+                    width: 24,
+                    height: 64,
                     decoration: BoxDecoration(
                       color: shirtColor,
-                      borderRadius: BorderRadius.circular(15),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                 ),
