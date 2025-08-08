@@ -598,7 +598,7 @@ class _ShoppingPageState extends State<ShoppingPage> {
           
           // Bottom section - Shopping info and progress
           Container(
-            height: 120,
+            height: _cartItems.isEmpty ? 120 : 60, // 动态调整高度：有商品时60，无商品时120
             color: Colors.grey[600],
             child: Column(
               children: [
@@ -690,159 +690,160 @@ class _ShoppingPageState extends State<ShoppingPage> {
                   ),
                 ),
                 
-                // Progress bar
-                Container(
-                  height: 60,
-                  color: const Color(0xFF4A6FA5),
-                  child: Row(
-                    children: [
-                      // Step 1 - Active
-                      Expanded(
-                        child: Container(
+                // Progress bar - 只在没有商品时显示
+                if (_cartItems.isEmpty)
+                  Container(
+                    height: 60,
+                    color: const Color(0xFF4A6FA5),
+                    child: Row(
+                      children: [
+                        // Step 1 - Active
+                        Expanded(
+                          child: Container(
+                            color: Colors.orange,
+                            child: const Center(
+                              child: Text(
+                                '商品登録',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        // Arrow
+                        Container(
+                          width: 30,
+                          height: 60,
                           color: Colors.orange,
-                          child: const Center(
-                            child: Text(
-                              '商品登録',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                          child: CustomPaint(
+                            painter: ArrowPainter(),
+                          ),
+                        ),
+                        // Step 2
+                        Expanded(
+                          child: Container(
+                            color: Colors.orange[300],
+                            child: const Center(
+                              child: Text(
+                                'レジ袋\n選択',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                      // Arrow
-                      Container(
-                        width: 30,
-                        height: 60,
-                        color: Colors.orange,
-                        child: CustomPaint(
-                          painter: ArrowPainter(),
-                        ),
-                      ),
-                      // Step 2
-                      Expanded(
-                        child: Container(
+                        // Arrow
+                        Container(
+                          width: 30,
+                          height: 60,
                           color: Colors.orange[300],
-                          child: const Center(
-                            child: Text(
-                              'レジ袋\n選択',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
+                          child: CustomPaint(
+                            painter: ArrowPainter(),
+                          ),
+                        ),
+                        // Step 3
+                        Expanded(
+                          child: Container(
+                            color: Colors.orange[200],
+                            child: const Center(
+                              child: Text(
+                                '従業員\n確認',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                      // Arrow
-                      Container(
-                        width: 30,
-                        height: 60,
-                        color: Colors.orange[300],
-                        child: CustomPaint(
-                          painter: ArrowPainter(),
-                        ),
-                      ),
-                      // Step 3
-                      Expanded(
-                        child: Container(
+                        // Arrow
+                        Container(
+                          width: 30,
+                          height: 60,
                           color: Colors.orange[200],
-                          child: const Center(
-                            child: Text(
-                              '従業員\n確認',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
+                          child: CustomPaint(
+                            painter: ArrowPainter(),
+                          ),
+                        ),
+                        // Step 4
+                        Expanded(
+                          child: Container(
+                            color: Colors.orange[100],
+                            child: const Center(
+                              child: Text(
+                                '支払(会計)\n方法選択',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                      // Arrow
-                      Container(
-                        width: 30,
-                        height: 60,
-                        color: Colors.orange[200],
-                        child: CustomPaint(
-                          painter: ArrowPainter(),
-                        ),
-                      ),
-                      // Step 4
-                      Expanded(
-                        child: Container(
+                        // Arrow
+                        Container(
+                          width: 30,
+                          height: 60,
                           color: Colors.orange[100],
-                          child: const Center(
-                            child: Text(
-                              '支払(会計)\n方法選択',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
+                          child: CustomPaint(
+                            painter: ArrowPainter(),
+                          ),
+                        ),
+                        // Step 5
+                        Expanded(
+                          child: Container(
+                            color: Colors.grey[400],
+                            child: const Center(
+                              child: Text(
+                                'お会計',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                      // Arrow
-                      Container(
-                        width: 30,
-                        height: 60,
-                        color: Colors.orange[100],
-                        child: CustomPaint(
-                          painter: ArrowPainter(),
-                        ),
-                      ),
-                      // Step 5
-                      Expanded(
-                        child: Container(
+                        // Arrow
+                        Container(
+                          width: 30,
+                          height: 60,
                           color: Colors.grey[400],
-                          child: const Center(
-                            child: Text(
-                              'お会計',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
+                          child: CustomPaint(
+                            painter: ArrowPainter(),
+                          ),
+                        ),
+                        // Step 6
+                        Expanded(
+                          child: Container(
+                            color: Colors.grey[300],
+                            child: const Center(
+                              child: Text(
+                                '完了',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                      // Arrow
-                      Container(
-                        width: 30,
-                        height: 60,
-                        color: Colors.grey[400],
-                        child: CustomPaint(
-                          painter: ArrowPainter(),
-                        ),
-                      ),
-                      // Step 6
-                      Expanded(
-                        child: Container(
-                          color: Colors.grey[300],
-                          child: const Center(
-                            child: Text(
-                              '完了',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
               ],
             ),
           ),

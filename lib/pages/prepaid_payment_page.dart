@@ -154,20 +154,20 @@ class _PrepaidPaymentPageState extends State<PrepaidPaymentPage> {
           // Main content
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(40),
+              padding: const EdgeInsets.all(20), // 减少padding从40到20
               child: Column(
                 children: [
                   // Header message
                   const Text(
                     '「チャージ操作」や「ポイント利用」が行えます',
                     style: TextStyle(
-                      fontSize: 24,
+                      fontSize: 20, // 减少字体大小从24到20
                       fontWeight: FontWeight.bold,
                       color: Colors.black,
                     ),
                   ),
                   
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 20), // 减少间距从40到20
                   
                   // Prepaid balance section
                   _buildBalanceSection(
@@ -179,12 +179,12 @@ class _PrepaidPaymentPageState extends State<PrepaidPaymentPage> {
                     onButtonPressed: _handleCharge,
                   ),
                   
-                  const Divider(height: 40, thickness: 1),
+                  const Divider(height: 20, thickness: 1), // 减少间距从40到20
                   
                   // Points section
                   _buildPointsSection(),
                   
-                  const Divider(height: 40, thickness: 1),
+                  const Divider(height: 20, thickness: 1), // 减少间距从40到20
                   
                   // Payment summary section
                   _buildPaymentSummary(),
@@ -206,7 +206,7 @@ class _PrepaidPaymentPageState extends State<PrepaidPaymentPage> {
     required VoidCallback onButtonPressed,
   }) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(10), // 减少padding从20到10
       child: Row(
         children: [
           // Title
@@ -215,7 +215,7 @@ class _PrepaidPaymentPageState extends State<PrepaidPaymentPage> {
             child: Text(
               title,
               style: const TextStyle(
-                fontSize: 24,
+                fontSize: 20, // 减少字体大小从24到20
                 fontWeight: FontWeight.bold,
                 color: Colors.black,
               ),
@@ -232,7 +232,7 @@ class _PrepaidPaymentPageState extends State<PrepaidPaymentPage> {
               )}$unit',
               textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 28,
+                fontSize: 24, // 减少字体大小从28到24
                 fontWeight: FontWeight.bold,
                 color: Colors.black,
               ),
@@ -243,7 +243,7 @@ class _PrepaidPaymentPageState extends State<PrepaidPaymentPage> {
           Expanded(
             flex: 2,
             child: Container(
-              height: 60,
+              height: 50, // 减少高度从60到50
               decoration: BoxDecoration(
                 color: buttonColor,
                 borderRadius: BorderRadius.circular(8),
@@ -265,7 +265,7 @@ class _PrepaidPaymentPageState extends State<PrepaidPaymentPage> {
                       buttonText,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 18,
+                        fontSize: 14, // 减少字体大小从18到14
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -281,7 +281,7 @@ class _PrepaidPaymentPageState extends State<PrepaidPaymentPage> {
 
   Widget _buildPointsSection() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(10), // 减少padding从20到10
       child: Column(
         children: [
           // Points balance
@@ -292,7 +292,7 @@ class _PrepaidPaymentPageState extends State<PrepaidPaymentPage> {
                 child: Text(
                   'ポイント残高：',
                   style: TextStyle(
-                    fontSize: 24,
+                    fontSize: 20, // 减少字体大小从24到20
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
                   ),
@@ -307,7 +307,7 @@ class _PrepaidPaymentPageState extends State<PrepaidPaymentPage> {
                   )}P',
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    fontSize: 28,
+                    fontSize: 24, // 减少字体大小从28到24
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
                   ),
@@ -316,7 +316,7 @@ class _PrepaidPaymentPageState extends State<PrepaidPaymentPage> {
               Expanded(
                 flex: 2,
                 child: Container(
-                  height: 60,
+                  height: 50, // 减少高度从60到50
                   decoration: BoxDecoration(
                     color: const Color(0xFF4A6FA5),
                     borderRadius: BorderRadius.circular(8),
@@ -339,7 +339,7 @@ class _PrepaidPaymentPageState extends State<PrepaidPaymentPage> {
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 16,
+                            fontSize: 12, // 减少字体大小从16到12
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -351,7 +351,7 @@ class _PrepaidPaymentPageState extends State<PrepaidPaymentPage> {
             ],
           ),
           
-          const SizedBox(height: 20),
+          const SizedBox(height: 10), // 减少间距从20到10
           
           // Used points
           Row(
@@ -361,7 +361,7 @@ class _PrepaidPaymentPageState extends State<PrepaidPaymentPage> {
                 child: Text(
                   'ご利用ポイント：',
                   style: TextStyle(
-                    fontSize: 24,
+                    fontSize: 20, // 减少字体大小从24到20
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
                   ),
@@ -373,7 +373,7 @@ class _PrepaidPaymentPageState extends State<PrepaidPaymentPage> {
                   '${usedPoints}P',
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    fontSize: 28,
+                    fontSize: 24, // 减少字体大小从28到24
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
                   ),
@@ -389,7 +389,7 @@ class _PrepaidPaymentPageState extends State<PrepaidPaymentPage> {
 
   Widget _buildPaymentSummary() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(10), // 减少padding从20到10
       child: Column(
         children: [
           // Total amount
@@ -400,7 +400,7 @@ class _PrepaidPaymentPageState extends State<PrepaidPaymentPage> {
                 child: Text(
                   'お会計金額：',
                   style: TextStyle(
-                    fontSize: 24,
+                    fontSize: 20, // 减少字体大小从24到20
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
                   ),
@@ -415,7 +415,7 @@ class _PrepaidPaymentPageState extends State<PrepaidPaymentPage> {
                   )}円',
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    fontSize: 28,
+                    fontSize: 24, // 减少字体大小从28到24
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
                   ),
@@ -425,7 +425,7 @@ class _PrepaidPaymentPageState extends State<PrepaidPaymentPage> {
               Expanded(
                 flex: 2,
                 child: Container(
-                  height: 60,
+                  height: 50, // 减少高度从60到50
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.red, width: 2),
                     borderRadius: BorderRadius.circular(8),
@@ -441,7 +441,7 @@ class _PrepaidPaymentPageState extends State<PrepaidPaymentPage> {
                           '支払い',
                           style: TextStyle(
                             color: Colors.black,
-                            fontSize: 18,
+                            fontSize: 16, // 减少字体大小从18到16
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -453,7 +453,7 @@ class _PrepaidPaymentPageState extends State<PrepaidPaymentPage> {
             ],
           ),
           
-          const SizedBox(height: 20),
+          const SizedBox(height: 10), // 减少间距从20到10
           
           // Insufficient amount (if any)
           if (hasInsufficientFunds) ...[
@@ -464,7 +464,7 @@ class _PrepaidPaymentPageState extends State<PrepaidPaymentPage> {
                   child: Text(
                     '不足額：',
                     style: TextStyle(
-                      fontSize: 24,
+                      fontSize: 20, // 减少字体大小从24到20
                       fontWeight: FontWeight.bold,
                       color: Colors.red,
                     ),
@@ -479,7 +479,7 @@ class _PrepaidPaymentPageState extends State<PrepaidPaymentPage> {
                     )}円',
                     textAlign: TextAlign.center,
                     style: const TextStyle(
-                      fontSize: 28,
+                      fontSize: 24, // 减少字体大小从28到24
                       fontWeight: FontWeight.bold,
                       color: Colors.red,
                     ),
@@ -488,7 +488,7 @@ class _PrepaidPaymentPageState extends State<PrepaidPaymentPage> {
                 Expanded(
                   flex: 2,
                   child: Container(
-                    height: 60,
+                    height: 50, // 减少高度从60到50
                     decoration: BoxDecoration(
                       color: Colors.orange,
                       borderRadius: BorderRadius.circular(8),
@@ -511,7 +511,7 @@ class _PrepaidPaymentPageState extends State<PrepaidPaymentPage> {
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: 14,
+                              fontSize: 12, // 减少字体大小从14到12
                               fontWeight: FontWeight.bold,
                             ),
                           ),

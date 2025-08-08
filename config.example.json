@@ -1,0 +1,14 @@
+{
+  "_comment": "这是POS UI Flutter应用的配置文件示例",
+  "_instructions": "1. 将此文件重命名为 config.json; 2. 修改下面的配置项; 3. 重启应用",
+  "api": {
+    "baseUrl": "http://your-api-server.com:8003/api/v1",
+    "apiKey": "your-api-key-here-replace-with-actual-key",
+    "terminalId": "your-tenant-STORE001-1"
+  },
+  "_notes": {
+    "baseUrl": "API服务器的完整URL地址",
+    "apiKey": "从API提供商获取的访问密钥",
+    "terminalId": "终端设备的唯一标识符"
+  }
+} 

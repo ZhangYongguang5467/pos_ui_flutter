@@ -1,10 +1,70 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter/services.dart';
+import 'dart:io';
 
 class ApiService {
-  static const String baseUrl = 'http://localhost:8003/api/v1';
-  static const String apiKey = '1px1jTk-rSxJVQB0A89o_N4stNUN_hi22gj9fqtnw4U';
-  static const String terminalId = 'demo_tenant-STORE001-1';
+  static String? _baseUrl;
+  static String? _apiKey;
+  static String? _terminalId;
+  static bool _configLoaded = false;
+
+  /// Load configuration from config.json file
+  static Future<void> _loadConfig() async {
+    if (_configLoaded) return;
+
+    try {
+      String configContent;
+      
+      try {
+        // Try to load from assets first (for development)
+        configContent = await rootBundle.loadString('config.json');
+      } catch (e) {
+        // If that fails, try to load from local file (for production)
+        final file = File('config.json');
+        if (await file.exists()) {
+          configContent = await file.readAsString();
+        } else {
+          throw Exception('config.json not found in assets or current directory');
+        }
+      }
+
+      final config = jsonDecode(configContent);
+      final apiConfig = config['api'];
+      
+      _baseUrl = apiConfig['baseUrl'];
+      _apiKey = apiConfig['apiKey'];
+      _terminalId = apiConfig['terminalId'];
+      _configLoaded = true;
+      
+      print('Configuration loaded successfully');
+    } catch (e) {
+      print('Error loading configuration: $e');
+      // Fallback to default values
+      _baseUrl = 'http://localhost:8003/api/v1';
+      _apiKey = '1px1jTk-rSxJVQB0A89o_N4stNUN_hi22gj9fqtnw4U';
+      _terminalId = 'demo_tenant-STORE001-1';
+      _configLoaded = true;
+    }
+  }
+
+  /// Get base URL, loading config if necessary
+  static Future<String> get baseUrl async {
+    await _loadConfig();
+    return _baseUrl!;
+  }
+
+  /// Get API key, loading config if necessary
+  static Future<String> get apiKey async {
+    await _loadConfig();
+    return _apiKey!;
+  }
+
+  /// Get terminal ID, loading config if necessary
+  static Future<String> get terminalId async {
+    await _loadConfig();
+    return _terminalId!;
+  }
 
   /// Create a new cart
   static Future<Map<String, dynamic>?> createCart({
@@ -14,12 +74,16 @@ class ApiService {
   }) async {
     try {
       // First try the real API
-      final url = Uri.parse('$baseUrl/carts?terminal_id=$terminalId');
+      final baseUrlValue = await baseUrl;
+      final terminalIdValue = await terminalId;
+      final apiKeyValue = await apiKey;
+      
+      final url = Uri.parse('$baseUrlValue/carts?terminal_id=$terminalIdValue');
       
       final response = await http.post(
         url,
         headers: {
-          'X-API-Key': apiKey,
+          'X-API-Key': apiKeyValue,
           'Content-Type': 'application/json',
         },
         body: jsonEncode({
@@ -53,12 +117,16 @@ class ApiService {
     required double unitPrice,
   }) async {
     try {
-      final url = Uri.parse('$baseUrl/carts/$cartId/lineItems?terminal_id=$terminalId');
+      final baseUrlValue = await baseUrl;
+      final terminalIdValue = await terminalId;
+      final apiKeyValue = await apiKey;
+      
+      final url = Uri.parse('$baseUrlValue/carts/$cartId/lineItems?terminal_id=$terminalIdValue');
       
       final response = await http.post(
         url,
         headers: {
-          'X-API-Key': apiKey,
+          'X-API-Key': apiKeyValue,
           'Content-Type': 'application/json',
         },
         body: jsonEncode([
@@ -89,12 +157,16 @@ class ApiService {
   /// Get cart details
   static Future<Map<String, dynamic>?> getCart(String cartId) async {
     try {
-      final url = Uri.parse('$baseUrl/carts/$cartId?terminal_id=$terminalId');
+      final baseUrlValue = await baseUrl;
+      final terminalIdValue = await terminalId;
+      final apiKeyValue = await apiKey;
+      
+      final url = Uri.parse('$baseUrlValue/carts/$cartId?terminal_id=$terminalIdValue');
       
       final response = await http.get(
         url,
         headers: {
-          'X-API-Key': apiKey,
+          'X-API-Key': apiKeyValue,
         },
       );
 
@@ -117,12 +189,16 @@ class ApiService {
   /// Calculate subtotal for cart
   static Future<Map<String, dynamic>?> calculateSubtotal(String cartId) async {
     try {
-      final url = Uri.parse('$baseUrl/carts/$cartId/subtotal?terminal_id=$terminalId');
+      final baseUrlValue = await baseUrl;
+      final terminalIdValue = await terminalId;
+      final apiKeyValue = await apiKey;
+      
+      final url = Uri.parse('$baseUrlValue/carts/$cartId/subtotal?terminal_id=$terminalIdValue');
       
       final response = await http.post(
         url,
         headers: {
-          'X-API-Key': apiKey,
+          'X-API-Key': apiKeyValue,
           'Content-Type': 'application/json',
         },
         body: jsonEncode({}),
@@ -152,12 +228,16 @@ class ApiService {
     required String detail,
   }) async {
     try {
-      final url = Uri.parse('$baseUrl/carts/$cartId/payments?terminal_id=$terminalId');
+      final baseUrlValue = await baseUrl;
+      final terminalIdValue = await terminalId;
+      final apiKeyValue = await apiKey;
+      
+      final url = Uri.parse('$baseUrlValue/carts/$cartId/payments?terminal_id=$terminalIdValue');
       
       final response = await http.post(
         url,
         headers: {
-          'X-API-Key': apiKey,
+          'X-API-Key': apiKeyValue,
           'Content-Type': 'application/json',
         },
         body: jsonEncode([
