@@ -181,7 +181,7 @@ class _NoBarcodeProductsPageState extends State<NoBarcodeProductsPage> {
                   width: 100,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE67E22),
+                    color: Colors.grey,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Material(
@@ -219,13 +219,13 @@ class _NoBarcodeProductsPageState extends State<NoBarcodeProductsPage> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.black,
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: const Text(
                     'TRIAL',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Colors.black,
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
