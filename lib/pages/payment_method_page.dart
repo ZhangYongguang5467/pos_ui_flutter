@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'prepaid_payment_page.dart';
+import '../services/api_service.dart';
 
 class PaymentMethodPage extends StatefulWidget {
   final List<dynamic> cartItems;
@@ -23,6 +24,7 @@ class PaymentMethodPage extends StatefulWidget {
 
 class _PaymentMethodPageState extends State<PaymentMethodPage> {
   String? selectedPaymentMethod;
+  final bool isCashEnabled = false;
 
   int get finalTotalAmount => widget.totalAmount + (widget.bagCount * widget.bagPrice);
 
@@ -50,7 +52,7 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
                   child: Material(
                     color: Colors.transparent,
                     child: InkWell(
-                      onTap: () => Navigator.pop(context),
+                      onTap: () => _handleBackButton(),
                       borderRadius: BorderRadius.circular(8),
                       child: const Center(
                         child: Text(
@@ -289,13 +291,18 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
                           child: Container(
                             height: 280,
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(
+                              gradient: LinearGradient(
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
-                                colors: [
-                                  Color(0xFF6B9BD8),
-                                  Color(0xFF4A7FB8),
-                                ],
+                                colors: isCashEnabled
+                                    ? const [
+                                        Color(0xFF6B9BD8),
+                                        Color(0xFF4A7FB8),
+                                      ]
+                                    : [
+                                        Colors.grey.shade400,
+                                        Colors.grey.shade500,
+                                      ],
                               ),
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [
@@ -306,21 +313,30 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
                                 ),
                               ],
                             ),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                onTap: () {
-                                  setState(() {
-                                    selectedPaymentMethod = 'cash';
-                                  });
-                                  _proceedWithPayment('cash');
-                                },
-                                borderRadius: BorderRadius.circular(20),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(20),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
+                                                          child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: () {
+                                    if (!isCashEnabled) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('現金払いは現在サポートされていません'),
+                                          duration: Duration(seconds: 2),
+                                        ),
+                                      );
+                                      return;
+                                    }
+                                    setState(() {
+                                      selectedPaymentMethod = 'cash';
+                                    });
+                                    _proceedWithPayment('cash');
+                                  },
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(20),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
                                       // Cash and coins illustration
                                       Container(
                                         width: 120,
@@ -420,10 +436,10 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
                                       const SizedBox(height: 20),
                                       
                                       // Payment method text
-                                      const Text(
+                                      Text(
                                         '現金払い',
                                         style: TextStyle(
-                                          color: Colors.white,
+                                          color: Colors.white.withOpacity(isCashEnabled ? 1.0 : 0.7),
                                           fontSize: 24,
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -459,6 +475,88 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
         ],
       ),
     );
+  }
+
+  Future<void> _handleBackButton() async {
+    if (widget.cartId == null) {
+      Navigator.pop(context);
+      return;
+    }
+
+    try {
+      // Show loading indicator
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              ),
+              SizedBox(width: 12),
+              Text(
+                '商品追加モードに戻しています...',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.blue,
+          duration: Duration(seconds: 30),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+
+      // Call resume item entry API
+      final result = await ApiService.resumeItemEntry(widget.cartId!);
+      
+      // Hide loading indicator
+      ScaffoldMessenger.of(context).clearSnackBars();
+
+      if (result != null) {
+        // Success - go back to previous page
+        Navigator.pop(context);
+      } else {
+        // Error - show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              '商品追加モードへの変更に失敗しました。もう一度お試しください。',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error in handle back button: $e');
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            '商品追加モードへの変更に失敗しました。もう一度お試しください。',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   void _proceedWithPayment(String paymentMethod) {

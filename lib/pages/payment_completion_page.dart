@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../services/printer_service.dart';
 
 class PaymentCompletionPage extends StatefulWidget {
   final int totalAmount;
@@ -24,6 +25,7 @@ class PaymentCompletionPage extends StatefulWidget {
 class _PaymentCompletionPageState extends State<PaymentCompletionPage> {
   int _remainingSeconds = 5;
   bool _billGenerated = false;
+  bool _receiptPrinted = false;
 
   @override
   void initState() {
@@ -41,9 +43,12 @@ class _PaymentCompletionPageState extends State<PaymentCompletionPage> {
   }
 
   Future<void> _generateBill() async {
-    if (_billGenerated || widget.cartId == null) {
-      print('[PaymentCompletionPage] Skip generateBill. billGenerated=$_billGenerated, cartId=${widget.cartId}');
+    if (widget.cartId == null) {
+      print('[PaymentCompletionPage] Skip generateBill: cartId is null');
       return;
+    }
+    if (_billGenerated) {
+      print('[PaymentCompletionPage] Skip generateBill: already generated');
     }
 
     print('[PaymentCompletionPage] Generating bill for cartId=${widget.cartId}');
@@ -64,6 +69,55 @@ class _PaymentCompletionPageState extends State<PaymentCompletionPage> {
     } catch (e) {
       print('[PaymentCompletionPage] Error generating bill: $e');
       _showErrorMessage();
+    } finally {
+      // Ensure we trigger the print once after Get Bill call completes
+      if (!_receiptPrinted) {
+        print('[PaymentCompletionPage] Proceeding to print receipt after Get Bill call');
+        _receiptPrinted = true;
+        await _printReceipt();
+      } else {
+        print('[PaymentCompletionPage] Receipt already printed, skipping');
+      }
+    }
+  }
+
+  Future<void> _printReceipt() async {
+    print('[PaymentCompletionPage] Sending receipt to printer...');
+
+    // Sample content adapted from the provided cURL, using \n for new lines.
+    const textContent = 'レジNo. 1             責# STF001\n'
+        '2025年08月07日(木) 15:11        \n'
+        '         【 領 収 証 】         \n'
+        '--------------------------------\n'
+        '美式咖啡                    50外\n'
+        '        2 個@25                 \n'
+        '--------------------------------\n'
+        '小計            2 個       \\50  \n'
+        '  外税10%                   \\5  \n'
+        '合計                       \\55  \n'
+        '  (外税10% 対象額         \\50)  \n'
+        '  (外税10%                 \\5)  \n'
+        'お預り                    \\100  \n'
+        'お釣り                     \\45  \n'
+        '--------------------------------\n'
+        '现金支付                   \\55  \n'
+        '--------------------------------\n'
+        'レシートNo. 111112              \n';
+
+    final success = await PrinterService.printReceipt(
+      textContent: textContent,
+      barcodeType: 'ean13',
+      barcodeData: '000000111112',
+      barcodeWidth: 2,
+      barcodeHeight: 64,
+      barcodeHri: 'below',
+      feedBeforeCutUnit: 48,
+    );
+
+    if (success) {
+      print('[PaymentCompletionPage] Receipt print sent successfully');
+    } else {
+      print('[PaymentCompletionPage] Failed to send receipt print');
     }
   }
 

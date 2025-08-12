@@ -282,11 +282,9 @@ class _BagSelectionPageState extends State<BagSelectionPage> {
   Widget _buildBagButton(int count, {required bool isSelected, bool isOrange = false}) {
     return Container(
       decoration: BoxDecoration(
-        color: isSelected 
-            ? (isOrange ? Colors.orange : Colors.black)
-            : Colors.black,
+        color: isSelected ? Colors.orange : Colors.black,
         borderRadius: BorderRadius.circular(8),
-        border: isSelected && isOrange 
+        border: isSelected
             ? Border.all(color: Colors.orange[700]!, width: 3)
             : null,
         boxShadow: [
@@ -386,6 +384,21 @@ class _BagSelectionPageState extends State<BagSelectionPage> {
       // Show loading indicator
       _showLoadingMessage();
 
+      // Add bags to cart if any selected
+      if (selectedBagCount > 0) {
+        final bagData = await ApiService.addBagToCart(
+          cartId: widget.cartId!,
+          quantity: selectedBagCount,
+          unitPrice: bagPrice.toDouble(),
+        );
+        
+        if (bagData == null) {
+          ScaffoldMessenger.of(context).clearSnackBars();
+          _showBagErrorMessage();
+          return;
+        }
+      }
+
       // Call subtotal API
       final subtotalData = await ApiService.calculateSubtotal(widget.cartId!);
       
@@ -439,7 +452,7 @@ class _BagSelectionPageState extends State<BagSelectionPage> {
             ),
             SizedBox(width: 12),
             Text(
-              '小計を計算しています...',
+              'レジ袋を追加して小計を計算しています...',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -476,6 +489,23 @@ class _BagSelectionPageState extends State<BagSelectionPage> {
       const SnackBar(
         content: Text(
           '小計の計算に失敗しました。もう一度お試しください。',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: Colors.red,
+        duration: Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _showBagErrorMessage() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'レジ袋の追加に失敗しました。もう一度お試しください。',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,

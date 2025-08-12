@@ -513,3 +513,19 @@ curl 'http://localhost:8003/api/v1/carts/ebcf1225-f373-4be2-8b13-04101d12f5eb/bi
     "metadata": null,
     "operation": "bill"
 }%
+
+
+# Print Receipt
+curl --location 'http://10.105.12.75/cgi-bin/epos/service.cgi?devid=local_printer&timeout=10000' \
+--header 'Content-Type: application/xml; charset=utf-8' \
+--data '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+  <s:Body>
+    <epos-print xmlns="http://www.epson-pos.com/schemas/2011/03/epos-print">
+      <text lang="ja" smooth="true">レジNo. 1             責# STF001&#10;2025年08月07日(木) 15:11        &#10;         【 領 収 証 】         &#10;--------------------------------&#10;美式咖啡                    50外&#10;        2 個@25                 &#10;--------------------------------&#10;小計            2 個       \50  &#10;  外税10%                   \5  &#10;合計                       \55  &#10;  (外税10% 対象額         \50)  &#10;  (外税10%                 \5)  &#10;お預り                    \100  &#10;お釣り                     \45  &#10;--------------------------------&#10;现金支付                   \55  &#10;--------------------------------&#10;レシートNo. 111112              &#10;</text>
+      <feed unit="24"/>
+      <barcode type="ean13" width="2" height="64" hri="below">000000111112</barcode>
+      <feed unit="48"/>
+      <cut/>
+    </epos-print>
+  </s:Body>
+</s:Envelope>'
