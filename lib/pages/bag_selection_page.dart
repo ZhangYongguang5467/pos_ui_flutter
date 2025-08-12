@@ -69,15 +69,13 @@ class _BagSelectionPageState extends State<BagSelectionPage> {
                   width: 100,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE67E22),
+                    color: Colors.grey,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Material(
                     color: Colors.transparent,
                     child: InkWell(
-                      onTap: () {
-                        // Handle staff call
-                      },
+                      onTap: null,
                       borderRadius: BorderRadius.circular(8),
                       child: const Center(
                         child: Text(
@@ -103,7 +101,7 @@ class _BagSelectionPageState extends State<BagSelectionPage> {
                   ),
                 ),
                 const Spacer(),
-                // Shopping stop button
+                                 // Shopping stop button
                 Container(
                   width: 100,
                   height: 40,
@@ -111,30 +109,37 @@ class _BagSelectionPageState extends State<BagSelectionPage> {
                     color: const Color(0xFF4A6FA5),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Center(
-                    child: Text(
-                      'お買物\n中止',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: _handleCancelShopping,
+                      borderRadius: BorderRadius.circular(8),
+                      child: const Center(
+                        child: Text(
+                          'お買物\n中止',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
                 const SizedBox(width: 20),
-                // Trial badge
+                                 // Trial badge
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.black,
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: const Text(
                     'TRIAL',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Colors.black,
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
@@ -434,6 +439,39 @@ class _BagSelectionPageState extends State<BagSelectionPage> {
       print('Error in proceed to next step: $e');
       ScaffoldMessenger.of(context).clearSnackBars();
       _showErrorMessage();
+    }
+  }
+
+  Future<void> _handleCancelShopping() async {
+    if (widget.cartId == null) {
+      Navigator.of(context).popUntil((route) => route.isFirst);
+      return;
+    }
+
+    try {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('お買物を中止しています...'),
+          backgroundColor: Colors.blue,
+          duration: Duration(seconds: 30),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+
+      await ApiService.cancelCart(widget.cartId!);
+
+      ScaffoldMessenger.of(context).clearSnackBars();
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    } catch (e) {
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('お買物の中止に失敗しました。もう一度お試しください。'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
   }
 

@@ -26,6 +26,8 @@ class _PaymentCompletionPageState extends State<PaymentCompletionPage> {
   int _remainingSeconds = 5;
   bool _billGenerated = false;
   bool _receiptPrinted = false;
+  String? _receiptText; // receipt text from API
+  String? _receiptNo;   // optional receipt number from API (for barcode)
 
   @override
   void initState() {
@@ -57,6 +59,13 @@ class _PaymentCompletionPageState extends State<PaymentCompletionPage> {
       final billData = await ApiService.generateBill(widget.cartId!);
       
       if (billData != null) {
+        // Capture receipt text and number when available
+        final dynamic receiptText = billData['receiptText'];
+        final dynamic receiptNo = billData['receiptNo'];
+        setState(() {
+          _receiptText = receiptText is String ? receiptText : null;
+          _receiptNo = receiptNo?.toString();
+        });
         setState(() {
           _billGenerated = true;
         });
@@ -83,31 +92,26 @@ class _PaymentCompletionPageState extends State<PaymentCompletionPage> {
 
   Future<void> _printReceipt() async {
     print('[PaymentCompletionPage] Sending receipt to printer...');
+    // Prefer server-provided receipt text. If missing, try to build from cart.
+    String? textContent = _receiptText;
+    if (textContent == null || textContent.trim().isEmpty) {
+      textContent = await _buildReceiptFromCart();
+    }
 
-    // Sample content adapted from the provided cURL, using \n for new lines.
-    const textContent = 'レジNo. 1             責# STF001\n'
-        '2025年08月07日(木) 15:11        \n'
-        '         【 領 収 証 】         \n'
-        '--------------------------------\n'
-        '美式咖啡                    50外\n'
-        '        2 個@25                 \n'
-        '--------------------------------\n'
-        '小計            2 個       \\50  \n'
-        '  外税10%                   \\5  \n'
-        '合計                       \\55  \n'
-        '  (外税10% 対象額         \\50)  \n'
-        '  (外税10%                 \\5)  \n'
-        'お預り                    \\100  \n'
-        'お釣り                     \\45  \n'
-        '--------------------------------\n'
-        '现金支付                   \\55  \n'
-        '--------------------------------\n'
-        'レシートNo. 111112              \n';
+    // Determine barcode if any (use receiptNo when available and numeric)
+    String barcodeData = '';
+    if (_receiptNo != null) {
+      final onlyDigits = _receiptNo!.replaceAll(RegExp(r'\D'), '');
+      if (onlyDigits.isNotEmpty) {
+        // Zero-pad to at least 12 digits for EAN-13 (printer can compute checksum)
+        barcodeData = onlyDigits.padLeft(12, '0');
+      }
+    }
 
     final success = await PrinterService.printReceipt(
-      textContent: textContent,
+      textContent: textContent ?? '【領収証】\n(明細取得に失敗しました)\n',
       barcodeType: 'ean13',
-      barcodeData: '000000111112',
+      barcodeData: barcodeData,
       barcodeWidth: 2,
       barcodeHeight: 64,
       barcodeHri: 'below',
@@ -118,6 +122,59 @@ class _PaymentCompletionPageState extends State<PaymentCompletionPage> {
       print('[PaymentCompletionPage] Receipt print sent successfully');
     } else {
       print('[PaymentCompletionPage] Failed to send receipt print');
+    }
+  }
+
+  // Build a simple receipt text using the latest cart snapshot if server did not return receiptText
+  Future<String> _buildReceiptFromCart() async {
+    try {
+      if (widget.cartId == null) return '【領収証】\n(カートIDなし)';
+      final cart = await ApiService.getCart(widget.cartId!);
+      if (cart == null) return '【領収証】\n(カート取得失敗)';
+
+      final String storeLine = 'レジNo. ${cart['terminalNo'] ?? '-'}             責# ${(cart['staff']?['id'] ?? '-')}'.toString();
+      final String dateLine = DateTime.now().toLocal().toString();
+
+      final buffer = StringBuffer();
+      buffer.writeln(storeLine);
+      buffer.writeln(dateLine);
+      buffer.writeln('         【 領 収 証 】         ');
+      buffer.writeln('--------------------------------');
+
+      final List<dynamic> items = (cart['lineItems'] as List<dynamic>? ?? []);
+      for (final li in items) {
+        final name = (li['itemName'] ?? li['name'] ?? '').toString();
+        final qty = (li['quantity'] ?? 0).toString();
+        final unit = (li['unitPrice'] ?? li['price'] ?? 0).toString();
+        final amount = (li['amount'] ?? 0).toString();
+        buffer.writeln('${name.padRight(24)}${amount}');
+        buffer.writeln('        $qty 個@$unit');
+      }
+
+      buffer.writeln('--------------------------------');
+      final subtotal = cart['totalAmount'] ?? cart['subtotalAmount'] ?? 0;
+      final totalWithTax = cart['totalAmountWithTax'] ?? cart['balanceAmount'] ?? 0;
+      buffer.writeln('小計                        \\${subtotal}');
+      // Taxes
+      final taxes = cart['taxes'] as List<dynamic>?;
+      if (taxes != null && taxes.isNotEmpty) {
+        for (final t in taxes) {
+          final name = (t['taxName'] ?? '税').toString();
+          final amt = (t['taxAmount'] ?? 0).toString();
+          buffer.writeln('  $name                   \\${amt}');
+        }
+      }
+      buffer.writeln('合計                       \\${totalWithTax}');
+
+      final receiptNo = cart['receiptNo'];
+      if (receiptNo != null) {
+        buffer.writeln('レシートNo. ${receiptNo}');
+      }
+
+      return buffer.toString();
+    } catch (e) {
+      print('[PaymentCompletionPage] Failed to build receipt from cart: $e');
+      return '【領収証】\n(明細生成に失敗しました)';
     }
   }
 
@@ -195,22 +252,22 @@ class _PaymentCompletionPageState extends State<PaymentCompletionPage> {
                     ),
                   ),
                   const Spacer(),
-                  // Trial badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.black,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: const Text(
-                      'TRIAL',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
+                                     // Trial badge
+                   Container(
+                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                     decoration: BoxDecoration(
+                       color: Colors.white,
+                       borderRadius: BorderRadius.circular(4),
+                     ),
+                     child: const Text(
+                       'TRIAL',
+                       style: TextStyle(
+                         color: Colors.black,
+                         fontSize: 14,
+                         fontWeight: FontWeight.bold,
+                       ),
+                     ),
+                   ),
                 ],
               ),
             ),

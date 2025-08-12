@@ -57,88 +57,100 @@ class _CardScanPageState extends State<CardScanPage> {
               // Top navigation bar
               Container(
                 height: 80,
+                color: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Row(
+                child: Stack(
+                  alignment: Alignment.center,
                   children: [
-                    // Back button
-                    Container(
-                      width: 100,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF4A6FA5),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () => Navigator.pop(context),
-                          borderRadius: BorderRadius.circular(8),
-                          child: const Center(
-                            child: Text(
-                              '戻る',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 20),
-                    // Staff call button
-                    Container(
-                      width: 100,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE67E22),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () {
-                            // Handle staff call
-                          },
-                          borderRadius: BorderRadius.circular(8),
-                          child: const Center(
-                            child: Text(
-                              '係員呼出',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const Spacer(),
-                    // Login text
-                    const Text(
-                      'ログイン',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const Spacer(),
-                    // Trial badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.black,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: const Text(
-                        'TRIAL',
+                    // Center title (always centered regardless of left/right content)
+                    const Center(
+                      child: Text(
+                        'ログイン',
                         style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
+                          color: Colors.black,
+                          fontSize: 20,
                           fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    // Left controls
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Back button
+                          Container(
+                            width: 100,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF4A6FA5),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () => Navigator.pop(context),
+                                borderRadius: BorderRadius.circular(8),
+                                child: const Center(
+                                  child: Text(
+                                    '戻る',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 20),
+                          // Staff call button
+                          Container(
+                            width: 100,
+                            height: 40,
+                                                  decoration: BoxDecoration(
+                        color: Colors.grey,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                                          onTap: null,
+                                borderRadius: BorderRadius.circular(8),
+                                child: const Center(
+                                  child: Text(
+                                    '係員呼出',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Right badge
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          'TRIAL',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),

@@ -25,10 +25,33 @@ class PaymentMethodPage extends StatefulWidget {
 class _PaymentMethodPageState extends State<PaymentMethodPage> {
   String? selectedPaymentMethod;
   final bool isCashEnabled = false;
+  double? _serverTotalWithTax;
 
-  int get finalTotalAmount => widget.totalAmount + (widget.bagCount * widget.bagPrice);
+  int get finalTotalAmount => (_serverTotalWithTax?.round()) ?? (widget.totalAmount + (widget.bagCount * widget.bagPrice));
 
   @override
+  void initState() {
+    super.initState();
+    _loadCartTotalWithTax();
+  }
+
+  Future<void> _loadCartTotalWithTax() async {
+    if (widget.cartId == null) return;
+    try {
+      final cart = await ApiService.getCart(widget.cartId!);
+      if (cart != null) {
+        final dynamic totWithTax = cart['totalAmountWithTax'];
+        if (totWithTax is num) {
+          setState(() {
+            _serverTotalWithTax = totWithTax.toDouble();
+          });
+        }
+      }
+    } catch (e) {
+      // ignore errors; fallback to UI total
+    }
+  }
+
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
@@ -39,87 +62,98 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
             height: 80,
             color: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Row(
+            child: Stack(
+              alignment: Alignment.center,
               children: [
-                // Back button
-                Container(
-                  width: 100,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF4A6FA5),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () => _handleBackButton(),
-                      borderRadius: BorderRadius.circular(8),
-                      child: const Center(
-                        child: Text(
-                          '戻る',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 20),
-                // Staff call button
-                Container(
-                  width: 100,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE67E22),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () {
-                        // Handle staff call
-                      },
-                      borderRadius: BorderRadius.circular(8),
-                      child: const Center(
-                        child: Text(
-                          '係員呼出',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const Spacer(),
-                // Title
-                const Text(
-                  'お会計方法選択',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const Spacer(),
-                // Trial badge
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.black,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: const Text(
-                    'TRIAL',
+                // Center title
+                const Center(
+                  child: Text(
+                    'お会計方法選択',
                     style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
+                      color: Colors.black,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                // Left controls
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Back button
+                      Container(
+                        width: 100,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF4A6FA5),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => _handleBackButton(),
+                            borderRadius: BorderRadius.circular(8),
+                            child: const Center(
+                              child: Text(
+                                '戻る',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 20),
+                      // Staff call button
+                      Container(
+                        width: 100,
+                        height: 40,
+                                          decoration: BoxDecoration(
+                    color: Colors.grey,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                                                  onTap: null,
+                            borderRadius: BorderRadius.circular(8),
+                            child: const Center(
+                              child: Text(
+                                '係員呼出',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Right badge
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Text(
+                      'TRIAL',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),

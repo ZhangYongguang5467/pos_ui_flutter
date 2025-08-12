@@ -15,37 +15,49 @@ class _SelfCheckoutPageState extends State<SelfCheckoutPage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        toolbarHeight: 80,
+        title: Stack(
+          alignment: Alignment.center,
           children: [
-            const Text(
-              '1234 (株)4U Applications',
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 16,
-                fontWeight: FontWeight.normal,
-              ),
-            ),
-            const Text(
-              'セルフレジ',
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.black,
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: const Text(
-                'TRIAL',
+            // Center title
+            const Center(
+              child: Text(
+                'セルフレジ',
                 style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
+                  color: Colors.black,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            // Left text
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                '1234 (株)4U Applications',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 16,
+                  fontWeight: FontWeight.normal,
+                ),
+              ),
+            ),
+            // Right badge
+            Align(
+              alignment: Alignment.centerRight,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Text(
+                  'TRIAL',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
@@ -351,17 +363,17 @@ class _SelfCheckoutPageState extends State<SelfCheckoutPage> {
                   Container(
                     width: double.infinity,
                     height: 200,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Color(0xFF66D9B3),
-                          Color(0xFF33CC99),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
+                                          decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.grey.shade400,
+                            Colors.grey.shade500,
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
                         BoxShadow(
                           color: Colors.black.withOpacity(0.1),
                           blurRadius: 10,
@@ -369,14 +381,12 @@ class _SelfCheckoutPageState extends State<SelfCheckoutPage> {
                         ),
                       ],
                     ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () {
-                          // Handle trial card without card
-                        },
-                        borderRadius: BorderRadius.circular(16),
-                        child: Padding(
+                                            child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: null,
+                            borderRadius: BorderRadius.circular(16),
+                            child: Padding(
                           padding: const EdgeInsets.all(20),
                           child: Column(
                             children: [
@@ -400,8 +410,8 @@ class _SelfCheckoutPageState extends State<SelfCheckoutPage> {
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
-                                  Icons.play_arrow,
-                                  color: Colors.white,
+                                  Icons.block,
+                                  color: Colors.white70,
                                   size: 30,
                                 ),
                               ),

@@ -423,6 +423,52 @@ class ApiService {
     }
   }
 
+  /// Cancel current cart (abort shopping)
+  static Future<Map<String, dynamic>?> cancelCart(String cartId) async {
+    try {
+      final baseUrlValue = await baseUrl;
+      final terminalIdValue = await terminalId;
+      final apiKeyValue = await apiKey;
+
+      final urlString = '$baseUrlValue/carts/$cartId/cancel?terminal_id=$terminalIdValue';
+      final url = Uri.parse(urlString);
+
+      final headers = {
+        'X-API-Key': apiKeyValue,
+        'Content-Type': 'application/json',
+      };
+      final body = jsonEncode({});
+
+      final maskedKey = apiKeyValue.length > 8
+          ? apiKeyValue.substring(0, 4) + '...' + apiKeyValue.substring(apiKeyValue.length - 4)
+          : '***';
+      print('[ApiService.cancelCart] URL: ' + urlString);
+      print('[ApiService.cancelCart] Headers: ' + jsonEncode({'X-API-Key': maskedKey, 'Content-Type': headers['Content-Type']}));
+      print('[ApiService.cancelCart] Body: ' + body);
+
+      final response = await http
+          .post(url, headers: headers, body: body)
+          .timeout(const Duration(seconds: 10));
+
+      print('[ApiService.cancelCart] Status: ' + response.statusCode.toString());
+      print('[ApiService.cancelCart] Response: ' + response.body);
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        if (responseData['success'] == true) {
+          return responseData['data'];
+        }
+      }
+
+      print('Failed to cancel cart. Status: ${response.statusCode}');
+      print('Response: ${response.body}');
+      return null;
+    } catch (e) {
+      print('Error cancelling cart: $e');
+      return null;
+    }
+  }
+
   /// Add bags to cart
   static Future<Map<String, dynamic>?> addBagToCart({
     required String cartId,

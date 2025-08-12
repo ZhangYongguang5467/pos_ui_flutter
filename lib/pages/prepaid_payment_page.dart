@@ -28,11 +28,35 @@ class _PrepaidPaymentPageState extends State<PrepaidPaymentPage> {
   final int pointBalance = 1076; // 1,076 P
   int usedPoints = 0; // Points to be used for payment
 
-  int get finalTotalAmount => widget.totalAmount + (widget.bagCount * widget.bagPrice);
+  double? _serverTotalWithTax;
+
+  int get finalTotalAmount => (_serverTotalWithTax?.round()) ?? (widget.totalAmount + (widget.bagCount * widget.bagPrice));
   int get remainingAmount => finalTotalAmount - prepaidBalance - usedPoints;
   bool get hasInsufficientFunds => remainingAmount > 0;
 
   @override
+  void initState() {
+    super.initState();
+    _loadCartTotalWithTax();
+  }
+
+  Future<void> _loadCartTotalWithTax() async {
+    if (widget.cartId == null) return;
+    try {
+      final cart = await ApiService.getCart(widget.cartId!);
+      if (cart != null) {
+        final dynamic totWithTax = cart['totalAmountWithTax'];
+        if (totWithTax is num) {
+          setState(() {
+            _serverTotalWithTax = totWithTax.toDouble();
+          });
+        }
+      }
+    } catch (e) {
+      // ignore errors; fallback to UI total
+    }
+  }
+
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
@@ -77,15 +101,13 @@ class _PrepaidPaymentPageState extends State<PrepaidPaymentPage> {
                   width: 100,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE67E22),
+                    color: Colors.grey,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Material(
                     color: Colors.transparent,
                     child: InkWell(
-                      onTap: () {
-                        // Handle staff call
-                      },
+                      onTap: null,
                       borderRadius: BorderRadius.circular(8),
                       child: const Center(
                         child: Text(
@@ -116,16 +138,23 @@ class _PrepaidPaymentPageState extends State<PrepaidPaymentPage> {
                   width: 100,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF4A6FA5),
+                    color: Colors.grey,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Center(
-                    child: Text(
-                      '残高更新',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: null,
+                      borderRadius: BorderRadius.circular(8),
+                      child: const Center(
+                        child: Text(
+                          '残高更新',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -135,13 +164,13 @@ class _PrepaidPaymentPageState extends State<PrepaidPaymentPage> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.black,
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: const Text(
                     'TRIAL',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Colors.black,
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
@@ -245,7 +274,7 @@ class _PrepaidPaymentPageState extends State<PrepaidPaymentPage> {
             child: Container(
               height: 50, // 减少高度从60到50
               decoration: BoxDecoration(
-                color: buttonColor,
+                color: Colors.grey,
                 borderRadius: BorderRadius.circular(8),
                 boxShadow: [
                   BoxShadow(
@@ -258,7 +287,7 @@ class _PrepaidPaymentPageState extends State<PrepaidPaymentPage> {
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  onTap: onButtonPressed,
+                  onTap: null,
                   borderRadius: BorderRadius.circular(8),
                   child: Center(
                     child: Text(
@@ -318,7 +347,7 @@ class _PrepaidPaymentPageState extends State<PrepaidPaymentPage> {
                 child: Container(
                   height: 50, // 减少高度从60到50
                   decoration: BoxDecoration(
-                    color: const Color(0xFF4A6FA5),
+                    color: Colors.grey,
                     borderRadius: BorderRadius.circular(8),
                     boxShadow: [
                       BoxShadow(
@@ -331,7 +360,7 @@ class _PrepaidPaymentPageState extends State<PrepaidPaymentPage> {
                   child: Material(
                     color: Colors.transparent,
                     child: InkWell(
-                      onTap: _handlePointPayment,
+                      onTap: null,
                       borderRadius: BorderRadius.circular(8),
                       child: const Center(
                         child: Text(

@@ -7,8 +7,9 @@ import '../services/api_service.dart';
 class CartItem {
   final Map<String, dynamic> product;
   int quantity;
+  final double taxRate; // per-item tax rate for display (e.g., 0.08 or 0.10)
   
-  CartItem({required this.product, this.quantity = 1});
+  CartItem({required this.product, this.quantity = 1, required this.taxRate});
 }
 
 class ShoppingPage extends StatefulWidget {
@@ -26,6 +27,62 @@ class _ShoppingPageState extends State<ShoppingPage> {
   int get _totalItemCount => _cartItems.fold(0, (sum, item) => sum + item.quantity);
   int get _totalAmount => _cartItems.fold(0, (sum, item) => sum + ((item.product['price'] as int) * item.quantity));
 
+  // Current tax rate derived from API (e.g., 0.10 for 10%)
+  double? _taxRate;
+
+  // Total amount including tax
+  int get _totalAmountTaxIncluded => (_totalAmount * (1 + (_taxRate ?? 0))).round();
+
+  // Line total including tax for a cart item (uses per-item tax rate)
+  int _calculateLineTotalWithTax(CartItem item) {
+    final int unitPrice = item.product['price'] as int; // price excl. tax
+    final int lineSubtotal = unitPrice * item.quantity; // excl. tax
+    return (lineSubtotal * (1 + item.taxRate)).round();
+  }
+
+  // Guess a per-item tax rate based on item code or name when server does not provide per-line tax info
+  double _guessTaxRateForProduct(Map<String, dynamic> product) {
+    final String code = (product['code'] ?? '').toString();
+    final String name = (product['name'] ?? '').toString();
+
+    // Example heuristic: coffee 8%, others 10%
+    if (code.startsWith('COFFEE') || name.contains('コーヒー')) {
+      return 0.08;
+    }
+    return 0.10; // default
+  }
+
+  // Refresh tax rate by fetching cart from API
+  Future<void> _refreshTaxRateFromApi() async {
+    if (_cartId == null) return;
+    try {
+      final cart = await ApiService.getCart(_cartId!);
+      if (cart != null) {
+        double? rate;
+        final total = (cart['totalAmount'] as num?)?.toDouble();
+        final withTax = (cart['totalAmountWithTax'] as num?)?.toDouble();
+        if (total != null && withTax != null && total > 0) {
+          rate = (withTax - total) / total;
+        } else {
+          final taxes = cart['taxes'];
+          if (taxes is List && taxes.isNotEmpty) {
+            final taxAmount = (taxes.first['taxAmount'] as num?)?.toDouble();
+            final targetAmount = (taxes.first['targetAmount'] as num?)?.toDouble();
+            if (taxAmount != null && targetAmount != null && targetAmount > 0) {
+              rate = taxAmount / targetAmount;
+            }
+          }
+        }
+        setState(() {
+          _taxRate = rate ?? _taxRate ?? 0.0;
+        });
+      }
+    } catch (e) {
+      // leave _taxRate unchanged on failure
+      print('Failed to refresh tax rate from API: $e');
+    }
+  }
+
   void _addToCart(Map<String, dynamic> product) {
     setState(() {
       // Check if product already exists in cart
@@ -34,7 +91,10 @@ class _ShoppingPageState extends State<ShoppingPage> {
       if (existingIndex >= 0) {
         _cartItems[existingIndex].quantity++;
       } else {
-        _cartItems.add(CartItem(product: product));
+        _cartItems.add(CartItem(
+          product: product,
+          taxRate: _guessTaxRateForProduct(product),
+        ));
       }
     });
   }
@@ -102,6 +162,8 @@ class _ShoppingPageState extends State<ShoppingPage> {
         if (mounted) {
           _showSuccessMessage();
         }
+        // Fetch tax info for display
+        await _refreshTaxRateFromApi();
       } else {
         // Show error message
         if (mounted) {
@@ -172,9 +234,12 @@ class _ShoppingPageState extends State<ShoppingPage> {
           'code': itemCode,
         };
         _addToCart(product);
-        
-        // Show success message
-        _showProductAddedMessage(itemName);
+
+         // Refresh tax rate from API (to ensure correct tax-inclusive display)
+         await _refreshTaxRateFromApi();
+         
+         // Show success message
+         _showProductAddedMessage(itemName);
       } else {
         _showProductErrorMessage(itemName);
       }
@@ -231,64 +296,143 @@ class _ShoppingPageState extends State<ShoppingPage> {
             height: 80,
             color: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Row(
+            child: Stack(
+              alignment: Alignment.center,
               children: [
-                // Staff call button
-                Container(
-                  width: 100,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE67E22),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () {
-                        // Handle staff call
-                      },
-                      borderRadius: BorderRadius.circular(8),
-                      child: const Center(
-                        child: Text(
-                          '係員呼出',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
+                // Center title
+                const Center(
+                  child: Text(
+                    '商品登録',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
-                const SizedBox(width: 20),
-                // No barcode products button
-                Container(
-                  width: 140,
+                // Left controls
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Staff call button
+                      Container(
+                        width: 100,
+                        height: 40,
+                                          decoration: BoxDecoration(
+                    color: Colors.grey,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                      onTap: null,
+                            borderRadius: BorderRadius.circular(8),
+                            child: const Center(
+                              child: Text(
+                                '係員呼出',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 20),
+                      // No barcode products button
+                      Container(
+                        width: 140,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF4A6FA5),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () async {
+                              final selectedProduct = await Navigator.push<Map<String, dynamic>>(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const NoBarcodeProductsPage(),
+                                ),
+                              );
+                              
+                              if (selectedProduct != null) {
+                                _addToCart(selectedProduct);
+                              }
+                            },
+                            borderRadius: BorderRadius.circular(8),
+                            child: const Center(
+                              child: Text(
+                                'バーコードが\nない商品',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Right controls
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Action buttons
+                      Container(
+                        width: 100,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF4A6FA5),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: _handleCancelShopping,
+                            borderRadius: BorderRadius.circular(8),
+                            child: const Center(
+                              child: Text(
+                                'お買物\n中止',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    const SizedBox(width: 20),
+                    Container(
+                  width: 100,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF4A6FA5),
+                    color: Colors.grey,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Material(
                     color: Colors.transparent,
                     child: InkWell(
-                      onTap: () async {
-                        final selectedProduct = await Navigator.push<Map<String, dynamic>>(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const NoBarcodeProductsPage(),
-                          ),
-                        );
-                        
-                        if (selectedProduct != null) {
-                          _addToCart(selectedProduct);
-                        }
-                      },
+                      onTap: null,
                       borderRadius: BorderRadius.circular(8),
                       child: const Center(
                         child: Text(
-                          'バーコードが\nない商品',
+                          'チャージ\n確認',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.white,
@@ -299,78 +443,30 @@ class _ShoppingPageState extends State<ShoppingPage> {
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 40),
-                // Title
-                const Text(
-                  '商品登録',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const Spacer(),
-                // Action buttons
-                Container(
-                  width: 100,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF4A6FA5),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'お買物\n中止',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
                     ),
-                  ),
-                ),
-                const SizedBox(width: 20),
-                Container(
-                  width: 100,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF4A6FA5),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'チャージ\n確認',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 20),
-                // Trial badge
+                    const SizedBox(width: 20),
+                                     // Trial badge
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.black,
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: const Text(
                     'TRIAL',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Colors.black,
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
-              ],
-            ),
-          ),
+                  ],
+                ), // end Row (right controls)
+              ), // end Align (right)
+            ], // end Stack children
+          ), // end Stack
+        ), // end Container
           
           // Main content
           Expanded(
@@ -618,7 +714,7 @@ class _ShoppingPageState extends State<ShoppingPage> {
                       ),
                       const SizedBox(width: 100),
                       Text(
-                        'お買物金額: $_totalAmount円(税込)',
+                        'お買物金額: $_totalAmountTaxIncluded円(税込)',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 18,
@@ -631,17 +727,24 @@ class _ShoppingPageState extends State<ShoppingPage> {
                         width: 80,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF4A6FA5),
+                          color: Colors.grey,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Center(
-                          child: Text(
-                            '商品\n取消',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: null,
+                            borderRadius: BorderRadius.circular(8),
+                            child: const Center(
+                              child: Text(
+                                '商品\n取消',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -853,6 +956,39 @@ class _ShoppingPageState extends State<ShoppingPage> {
     );
   }
 
+  Future<void> _handleCancelShopping() async {
+    if (_cartId == null) {
+      Navigator.of(context).popUntil((route) => route.isFirst);
+      return;
+    }
+
+    try {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('お買物を中止しています...'),
+          backgroundColor: Colors.blue,
+          duration: Duration(seconds: 30),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+
+      await ApiService.cancelCart(_cartId!);
+
+      ScaffoldMessenger.of(context).clearSnackBars();
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    } catch (e) {
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('お買物の中止に失敗しました。もう一度お試しください。'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
   Widget _buildCartItem(CartItem cartItem, int index) {
     final product = cartItem.product;
     
@@ -914,7 +1050,7 @@ class _ShoppingPageState extends State<ShoppingPage> {
           Expanded(
             flex: 1,
             child: Text(
-              '${product['price'] * cartItem.quantity}円',
+              '${_calculateLineTotalWithTax(cartItem)}円',
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 24,
