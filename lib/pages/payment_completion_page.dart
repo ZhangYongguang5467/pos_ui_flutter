@@ -98,15 +98,8 @@ class _PaymentCompletionPageState extends State<PaymentCompletionPage> {
       textContent = await _buildReceiptFromCart();
     }
 
-    // Determine barcode if any (use receiptNo when available and numeric)
-    String barcodeData = '';
-    if (_receiptNo != null) {
-      final onlyDigits = _receiptNo!.replaceAll(RegExp(r'\D'), '');
-      if (onlyDigits.isNotEmpty) {
-        // Zero-pad to at least 12 digits for EAN-13 (printer can compute checksum)
-        barcodeData = onlyDigits.padLeft(12, '0');
-      }
-    }
+    // Generate barcode as YYYYMMDD + store code (fixed '0027') → 12 digits
+    final String barcodeData = _generateBarcodeData();
 
     final success = await PrinterService.printReceipt(
       textContent: textContent ?? '【領収証】\n(明細取得に失敗しました)\n',
@@ -176,6 +169,15 @@ class _PaymentCompletionPageState extends State<PaymentCompletionPage> {
       print('[PaymentCompletionPage] Failed to build receipt from cart: $e');
       return '【領収証】\n(明細生成に失敗しました)';
     }
+  }
+
+  // Generate EAN-13 data body: YYYYMMDD + fixed store code '0027' (12 digits; printer will add checksum)
+  String _generateBarcodeData() {
+    final DateTime now = DateTime.now();
+    final String y = now.year.toString().padLeft(4, '0');
+    final String m = now.month.toString().padLeft(2, '0');
+    final String d = now.day.toString().padLeft(2, '0');
+    return '${y}${m}${d}0027';
   }
 
   void _showSuccessMessage() {
