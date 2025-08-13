@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'pin_input_page.dart';
+import 'dart:async';
 
 class CardScanPage extends StatefulWidget {
   const CardScanPage({super.key});
@@ -10,6 +11,11 @@ class CardScanPage extends StatefulWidget {
 }
 
 class _CardScanPageState extends State<CardScanPage> {
+  // Buffer and timing for USB HID scanner input
+  final StringBuffer _scanBuffer = StringBuffer();
+  Timer? _scanDebounce;
+  bool _hasNavigated = false;
+
   @override
   void initState() {
     super.initState();
@@ -19,21 +25,62 @@ class _CardScanPageState extends State<CardScanPage> {
 
   @override
   void dispose() {
+    _scanDebounce?.cancel();
     RawKeyboard.instance.removeListener(_handleKeyEvent);
     super.dispose();
   }
 
   void _handleKeyEvent(RawKeyEvent event) {
     if (event is RawKeyDownEvent) {
+      // Enter key: treat as end-of-scan or manual continue
       if (event.logicalKey == LogicalKeyboardKey.enter) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const PinInputPage(),
-          ),
-        );
+        _scanDebounce?.cancel();
+        if (_scanBuffer.isNotEmpty) {
+          final String data = _scanBuffer.toString();
+          _scanBuffer.clear();
+          _onScanCompleted(data);
+        } else {
+          _goNext();
+        }
+        return;
+      }
+
+      // Collect printable characters (typical for HID scanners)
+      final String? ch = event.character;
+      if (ch != null && ch.isNotEmpty) {
+        // Filter non-printable control characters
+        final int code = ch.codeUnitAt(0);
+        final bool isPrintable = code >= 32 && code != 127;
+        if (isPrintable) {
+          _scanBuffer.write(ch);
+          // Debounce to decide end-of-scan when input pauses briefly
+          _scanDebounce?.cancel();
+          _scanDebounce = Timer(const Duration(milliseconds: 100), () {
+            if (_scanBuffer.isNotEmpty) {
+              final String data = _scanBuffer.toString();
+              _scanBuffer.clear();
+              _onScanCompleted(data);
+            }
+          });
+        }
       }
     }
+  }
+
+  void _onScanCompleted(String data) {
+    // For login, scanner data content is not required; trigger same action as Enter
+    _goNext();
+  }
+
+  void _goNext() {
+    if (!mounted || _hasNavigated) return;
+    _hasNavigated = true;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const PinInputPage(),
+      ),
+    );
   }
 
   @override
@@ -110,14 +157,14 @@ class _CardScanPageState extends State<CardScanPage> {
                           Container(
                             width: 100,
                             height: 40,
-                                                  decoration: BoxDecoration(
-                        color: Colors.grey,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+                            decoration: BoxDecoration(
+                              color: Colors.grey,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                             child: Material(
                               color: Colors.transparent,
                               child: InkWell(
-                                                          onTap: null,
+                                onTap: null,
                                 borderRadius: BorderRadius.circular(8),
                                 child: const Center(
                                   child: Text(

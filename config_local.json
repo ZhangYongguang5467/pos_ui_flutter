@@ -5,7 +5,7 @@
     "terminalId": "demo_tenant-STORE001-1"
   },
   "printer": {
-    "serviceUrl": "http://10.105.12.75/cgi-bin/epos/service.cgi",
+    "serviceUrl": "http://localhost/cgi-bin/epos/service.cgi",
     "deviceId": "local_printer",
     "timeoutMs": 10000
   }

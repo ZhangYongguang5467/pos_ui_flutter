@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'no_barcode_products_page.dart';
 import 'bag_selection_page.dart';
 import '../services/api_service.dart';
+import 'dart:async';
 
 class CartItem {
   final Map<String, dynamic> product;
@@ -23,6 +24,8 @@ class _ShoppingPageState extends State<ShoppingPage> {
   List<CartItem> _cartItems = [];
   String? _cartId;
   bool _isInitialized = false;
+  final StringBuffer _scanBuffer = StringBuffer();
+  Timer? _scanDebounce;
 
   int get _totalItemCount => _cartItems.fold(0, (sum, item) => sum + item.quantity);
   int get _totalAmount => _cartItems.fold(0, (sum, item) => sum + ((item.product['price'] as int) * item.quantity));
@@ -118,6 +121,7 @@ class _ShoppingPageState extends State<ShoppingPage> {
 
   @override
   void dispose() {
+    _scanDebounce?.cancel();
     _removeKeyboardListener();
     super.dispose();
   }
@@ -133,12 +137,62 @@ class _ShoppingPageState extends State<ShoppingPage> {
   void _handleKeyEvent(RawKeyEvent event) {
     if (event is RawKeyDownEvent) {
       final key = event.logicalKey;
+      // If Enter pressed, treat as end-of-scan
+      if (key == LogicalKeyboardKey.enter) {
+        _scanDebounce?.cancel();
+        if (_scanBuffer.isNotEmpty) {
+          final String data = _scanBuffer.toString();
+          _scanBuffer.clear();
+          _onScanCompleted(data);
+        }
+        return;
+      }
       
-      if (key == LogicalKeyboardKey.digit1) {
+      // Manual keyboard shortcuts (ignore during scanning sequence)
+      if (_scanBuffer.isEmpty && key == LogicalKeyboardKey.digit1) {
         _addProductByCode('COFFEE001', 'コーヒー', 25.0);
-      } else if (key == LogicalKeyboardKey.digit2) {
+      } else if (_scanBuffer.isEmpty && key == LogicalKeyboardKey.digit2) {
         _addProductByCode('SANDWICH001', 'サンドイッチ', 35.0);
       }
+
+      // Collect printable characters from HID scanner
+      final String? ch = event.character;
+      if (ch != null && ch.isNotEmpty) {
+        final int code = ch.codeUnitAt(0);
+        final bool isPrintable = code >= 32 && code != 127;
+        if (isPrintable) {
+          _scanBuffer.write(ch);
+          _scanDebounce?.cancel();
+          _scanDebounce = Timer(const Duration(milliseconds: 100), () {
+            if (_scanBuffer.isNotEmpty) {
+              final String data = _scanBuffer.toString();
+              _scanBuffer.clear();
+              _onScanCompleted(data);
+            }
+          });
+        }
+      }
+    }
+  }
+
+  void _onScanCompleted(String data) {
+    final String code = data.trim().toUpperCase();
+    if (code.contains('COFFEE001')) {
+      _addProductByCode('COFFEE001', 'コーヒー', 25.0);
+      return;
+    }
+    if (code.contains('SANDWICH001')) {
+      _addProductByCode('SANDWICH001', 'サンドイッチ', 35.0);
+      return;
+    }
+    // Fallback: map single-key scans
+    if (code == '1') {
+      _addProductByCode('COFFEE001', 'コーヒー', 25.0);
+      return;
+    }
+    if (code == '2') {
+      _addProductByCode('SANDWICH001', 'サンドイッチ', 35.0);
+      return;
     }
   }
 
