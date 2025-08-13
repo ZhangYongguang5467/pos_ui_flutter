@@ -174,7 +174,7 @@ class ApiService {
     required String cartId,
     required String itemCode,
     required int quantity,
-    required double unitPrice,
+    double? unitPrice,
   }) async {
     try {
       final baseUrlValue = await baseUrl;
@@ -188,13 +188,14 @@ class ApiService {
         'X-API-Key': apiKeyValue,
         'Content-Type': 'application/json',
       };
-      final bodyMap = [
-        {
-          'item_code': itemCode,
-          'quantity': quantity,
-          'unit_price': unitPrice,
-        }
-      ];
+      final item = {
+        'item_code': itemCode,
+        'quantity': quantity,
+      };
+      if (unitPrice != null) {
+        item['unit_price'] = unitPrice;
+      }
+      final bodyMap = [item];
       final body = jsonEncode(bodyMap);
 
       final maskedKey = apiKeyValue.length > 8

@@ -148,11 +148,13 @@ class _ShoppingPageState extends State<ShoppingPage> {
         return;
       }
       
-      // Manual keyboard shortcuts (ignore during scanning sequence)
+      // Manual keyboard shortcuts FIRST (when buffer is empty)
       if (_scanBuffer.isEmpty && key == LogicalKeyboardKey.digit1) {
         _addProductByCode('COFFEE001', 'コーヒー', 25.0);
+        return;
       } else if (_scanBuffer.isEmpty && key == LogicalKeyboardKey.digit2) {
         _addProductByCode('SANDWICH001', 'サンドイッチ', 35.0);
+        return;
       }
 
       // Collect printable characters from HID scanner
@@ -176,24 +178,11 @@ class _ShoppingPageState extends State<ShoppingPage> {
   }
 
   void _onScanCompleted(String data) {
-    final String code = data.trim().toUpperCase();
-    if (code.contains('COFFEE001')) {
-      _addProductByCode('COFFEE001', 'コーヒー', 25.0);
+    final String code = data.trim();
+    if (code.isEmpty) {
       return;
     }
-    if (code.contains('SANDWICH001')) {
-      _addProductByCode('SANDWICH001', 'サンドイッチ', 35.0);
-      return;
-    }
-    // Fallback: map single-key scans
-    if (code == '1') {
-      _addProductByCode('COFFEE001', 'コーヒー', 25.0);
-      return;
-    }
-    if (code == '2') {
-      _addProductByCode('SANDWICH001', 'サンドイッチ', 35.0);
-      return;
-    }
+    _addProductByBarcode(code);
   }
 
   Future<void> _initializeCart() async {
@@ -281,25 +270,92 @@ class _ShoppingPageState extends State<ShoppingPage> {
       );
 
       if (cartData != null) {
-        // Add item to local cart display
-        final product = {
-          'name': itemName,
-          'price': unitPrice.toInt(),
-          'code': itemCode,
-        };
-        _addToCart(product);
-
-         // Refresh tax rate from API (to ensure correct tax-inclusive display)
-         await _refreshTaxRateFromApi();
-         
-         // Show success message
-         _showProductAddedMessage(itemName);
+        // Sync cart from API data to ensure consistency
+        _syncCartFromApiData(cartData);
+        await _refreshTaxRateFromApi();
+        
+        // Show success message
+        _showProductAddedMessage(itemName);
       } else {
         _showProductErrorMessage(itemName);
       }
     } catch (e) {
       print('Error adding product $itemCode: $e');
       _showProductErrorMessage(itemName);
+    }
+  }
+
+  Future<void> _addProductByBarcode(String barcode) async {
+    if (_cartId == null) {
+      _showErrorMessage();
+      return;
+    }
+
+    try {
+      final cartData = await ApiService.addItemToCart(
+        cartId: _cartId!,
+        itemCode: barcode,
+        quantity: 1,
+        unitPrice: null,
+      );
+
+      if (cartData != null) {
+        _syncCartFromApiData(cartData);
+        await _refreshTaxRateFromApi();
+
+        String itemName = barcode;
+        final items = cartData['lineItems'];
+        if (items is List && items.isNotEmpty) {
+          final matched = items.firstWhere(
+            (it) => (it['itemCode']?.toString() ?? '') == barcode,
+            orElse: () => items.last,
+          );
+          itemName = matched['itemName']?.toString() ?? itemName;
+        }
+
+        _showProductAddedMessage(itemName);
+      } else {
+        _showProductErrorMessage(barcode);
+      }
+    } catch (e) {
+      print('Error adding product by barcode $barcode: $e');
+      _showProductErrorMessage(barcode);
+    }
+  }
+
+  void _syncCartFromApiData(Map<String, dynamic> cartData) {
+    final items = cartData['lineItems'];
+    if (items is List) {
+      final Map<String, CartItem> itemMap = {};
+      
+      for (final item in items) {
+        final String itemName = item['itemName']?.toString() ?? '商品';
+        final String itemCode = item['itemCode']?.toString() ?? '';
+        final double unitPrice = (item['unitPrice'] as num?)?.toDouble() ?? 0.0;
+        final int quantity = (item['quantity'] as num?)?.toInt() ?? 1;
+
+        final Map<String, dynamic> product = {
+          'name': itemName,
+          'price': unitPrice.toInt(),
+          'code': itemCode,
+        };
+
+        // Use product name as key to merge same products
+        final String key = itemName;
+        if (itemMap.containsKey(key)) {
+          itemMap[key]!.quantity += quantity;
+        } else {
+          itemMap[key] = CartItem(
+            product: product,
+            quantity: quantity,
+            taxRate: _guessTaxRateForProduct(product),
+          );
+        }
+      }
+
+      setState(() {
+        _cartItems = itemMap.values.toList();
+      });
     }
   }
 
