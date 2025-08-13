@@ -26,7 +26,7 @@ class _PaymentCompletionPageState extends State<PaymentCompletionPage> {
   int _remainingSeconds = 5;
   bool _billGenerated = false;
   bool _receiptPrinted = false;
-  String? _receiptText; // receipt text from API
+  String? _journalText; // journal text from API (plain text format)
   String? _receiptNo;   // optional receipt number from API (for barcode)
 
   @override
@@ -59,11 +59,11 @@ class _PaymentCompletionPageState extends State<PaymentCompletionPage> {
       final billData = await ApiService.generateBill(widget.cartId!);
       
       if (billData != null) {
-        // Capture receipt text and number when available
-        final dynamic receiptText = billData['receiptText'];
+        // Capture journal text and receipt number when available
+        final dynamic journalText = billData['journalText'];
         final dynamic receiptNo = billData['receiptNo'];
         setState(() {
-          _receiptText = receiptText is String ? receiptText : null;
+          _journalText = journalText is String ? journalText : null;
           _receiptNo = receiptNo?.toString();
         });
         setState(() {
@@ -92,8 +92,8 @@ class _PaymentCompletionPageState extends State<PaymentCompletionPage> {
 
   Future<void> _printReceipt() async {
     print('[PaymentCompletionPage] Sending receipt to printer...');
-    // Prefer server-provided receipt text. If missing, try to build from cart.
-    String? textContent = _receiptText;
+    // Prefer server-provided journal text (plain text format). If missing, try to build from cart.
+    String? textContent = _journalText;
     if (textContent == null || textContent.trim().isEmpty) {
       textContent = await _buildReceiptFromCart();
     }
@@ -118,7 +118,9 @@ class _PaymentCompletionPageState extends State<PaymentCompletionPage> {
     }
   }
 
-  // Build a simple receipt text using the latest cart snapshot if server did not return receiptText
+
+
+  // Build a simple receipt text using the latest cart snapshot if server did not return journalText
   Future<String> _buildReceiptFromCart() async {
     try {
       if (widget.cartId == null) return '【領収証】\n(カートIDなし)';
