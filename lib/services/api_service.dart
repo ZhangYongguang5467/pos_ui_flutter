@@ -247,6 +247,7 @@ class ApiService {
           : '***';
       print('[ApiService.getCart] URL: ' + urlString);
       print('[ApiService.getCart] Headers: ' + jsonEncode({'X-API-Key': maskedKey}));
+      print('[ApiService.getCart] Body: (GET request - no body)');
 
       final response = await http.get(url, headers: headers).timeout(const Duration(seconds: 10));
 
@@ -523,6 +524,59 @@ class ApiService {
       return null;
     } catch (e) {
       print('Error adding bag to cart: $e');
+      return null;
+    }
+  }
+
+  /// Update quantity of existing item in cart
+  static Future<Map<String, dynamic>?> updateItemQuantity({
+    required String cartId,
+    required int lineNo,
+    required int quantity,
+  }) async {
+    try {
+      final baseUrlValue = await baseUrl;
+      final terminalIdValue = await terminalId;
+      final apiKeyValue = await apiKey;
+
+      final urlString = '$baseUrlValue/carts/$cartId/lineItems/$lineNo/quantity?terminal_id=$terminalIdValue';
+      final url = Uri.parse(urlString);
+
+      final headers = {
+        'X-API-Key': apiKeyValue,
+        'Content-Type': 'application/json',
+      };
+      final bodyMap = {
+        'quantity': quantity,
+      };
+      final body = jsonEncode(bodyMap);
+
+      final maskedKey = apiKeyValue.length > 8
+          ? apiKeyValue.substring(0, 4) + '...' + apiKeyValue.substring(apiKeyValue.length - 4)
+          : '***';
+      print('[ApiService.updateItemQuantity] URL: ' + urlString);
+      print('[ApiService.updateItemQuantity] Headers: ' + jsonEncode({'X-API-Key': maskedKey, 'Content-Type': headers['Content-Type']}));
+      print('[ApiService.updateItemQuantity] Body: ' + body);
+
+      final response = await http
+          .patch(url, headers: headers, body: body)
+          .timeout(const Duration(seconds: 10));
+
+      print('[ApiService.updateItemQuantity] Status: ' + response.statusCode.toString());
+      print('[ApiService.updateItemQuantity] Response: ' + response.body);
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        if (responseData['success'] == true) {
+          return responseData['data'];
+        }
+      }
+      
+      print('Failed to update item quantity. Status: ${response.statusCode}');
+      print('Response: ${response.body}');
+      return null;
+    } catch (e) {
+      print('Error updating item quantity: $e');
       return null;
     }
   }

@@ -9,8 +9,9 @@ class CartItem {
   final Map<String, dynamic> product;
   int quantity;
   final double taxRate; // per-item tax rate for display (e.g., 0.08 or 0.10)
+  List<int> lineNos; // all line numbers from API response for quantity updates
   
-  CartItem({required this.product, this.quantity = 1, required this.taxRate});
+  CartItem({required this.product, this.quantity = 1, required this.taxRate, this.lineNos = const []});
 }
 
 class ShoppingPage extends StatefulWidget {
@@ -59,8 +60,11 @@ class _ShoppingPageState extends State<ShoppingPage> {
   Future<void> _refreshTaxRateFromApi() async {
     if (_cartId == null) return;
     try {
+      print('[_refreshTaxRateFromApi] Fetching cart data for tax rate calculation');
       final cart = await ApiService.getCart(_cartId!);
       if (cart != null) {
+        print('[_refreshTaxRateFromApi] Got cart data, calling _syncCartFromApiData');
+        _syncCartFromApiData(cart);
         double? rate;
         final total = (cart['totalAmount'] as num?)?.toDouble();
         final withTax = (cart['totalAmountWithTax'] as num?)?.toDouble();
@@ -102,6 +106,82 @@ class _ShoppingPageState extends State<ShoppingPage> {
     });
   }
 
+  // Unified method to handle all product quantity changes
+  Future<void> _updateProductQuantity(String itemCode, String itemName, double? unitPrice, int quantityChange) async {
+    if (_cartId == null) {
+      _showErrorMessage();
+      return;
+    }
+
+    try {
+      print('[_updateProductQuantity] === UNIFIED LOGIC ===');
+      print('[_updateProductQuantity] ItemCode: $itemCode, QuantityChange: $quantityChange');
+      
+      // Check if product already exists in cart
+      final existingCartItem = _cartItems.firstWhere(
+        (item) => item.product['code'] == itemCode,
+        orElse: () => CartItem(product: {}, taxRate: 0.0),
+      );
+
+      Map<String, dynamic>? cartData;
+
+      if (existingCartItem.product.isNotEmpty && existingCartItem.lineNos.isNotEmpty) {
+        // Product exists, update quantity
+        final currentQuantity = existingCartItem.quantity;
+        final newQuantity = currentQuantity + quantityChange;
+        
+        print('[_updateProductQuantity] Product exists. Current: $currentQuantity, New: $newQuantity');
+        
+        if (newQuantity <= 0) {
+          // Remove item by setting quantity to 0
+          cartData = await ApiService.updateItemQuantity(
+            cartId: _cartId!,
+            lineNo: existingCartItem.lineNos.first,
+            quantity: 0,
+          );
+        } else {
+          // Update quantity
+          cartData = await ApiService.updateItemQuantity(
+            cartId: _cartId!,
+            lineNo: existingCartItem.lineNos.first,
+            quantity: newQuantity,
+          );
+        }
+      } else {
+        // Product doesn't exist, add new item (only if quantityChange is positive)
+        if (quantityChange > 0) {
+          print('[_updateProductQuantity] Product doesn\'t exist, creating new item');
+          cartData = await ApiService.addItemToCart(
+            cartId: _cartId!,
+            itemCode: itemCode,
+            quantity: quantityChange,
+            unitPrice: unitPrice,
+          );
+        } else {
+          print('[_updateProductQuantity] Cannot decrease non-existent product');
+          return;
+        }
+      }
+
+      if (cartData != null) {
+        _syncCartFromApiData(cartData);
+        await _refreshTaxRateFromApi();
+        
+        // Show appropriate message
+        if (quantityChange > 0) {
+          _showQuantityUpdatedMessage(itemName, '増加');
+        } else {
+          _showQuantityUpdatedMessage(itemName, '減少');
+        }
+      } else {
+        _showProductErrorMessage(itemName);
+      }
+    } catch (e) {
+      print('Error updating product quantity: $e');
+      _showProductErrorMessage(itemName);
+    }
+  }
+
   void _removeFromCart(int index) {
     setState(() {
       if (_cartItems[index].quantity > 1) {
@@ -110,6 +190,30 @@ class _ShoppingPageState extends State<ShoppingPage> {
         _cartItems.removeAt(index);
       }
     });
+  }
+
+  Future<void> _incrementQuantity(int index) async {
+    final cartItem = _cartItems[index];
+    
+    // Use unified logic: increase quantity by 1
+    await _updateProductQuantity(
+      cartItem.product['code'],
+      cartItem.product['name'],
+      cartItem.product['price'].toDouble(),
+      1, // increase by 1
+    );
+  }
+
+  Future<void> _decrementQuantity(int index) async {
+    final cartItem = _cartItems[index];
+    
+    // Use unified logic: decrease quantity by 1
+    await _updateProductQuantity(
+      cartItem.product['code'],
+      cartItem.product['name'],
+      cartItem.product['price'].toDouble(),
+      -1, // decrease by 1
+    );
   }
 
   @override
@@ -256,76 +360,21 @@ class _ShoppingPageState extends State<ShoppingPage> {
   }
 
   Future<void> _addProductByCode(String itemCode, String itemName, double unitPrice) async {
-    if (_cartId == null) {
-      _showErrorMessage();
-      return;
-    }
-
-    try {
-      final cartData = await ApiService.addItemToCart(
-        cartId: _cartId!,
-        itemCode: itemCode,
-        quantity: 1,
-        unitPrice: unitPrice,
-      );
-
-      if (cartData != null) {
-        // Sync cart from API data to ensure consistency
-        _syncCartFromApiData(cartData);
-        await _refreshTaxRateFromApi();
-        
-        // Show success message
-        _showProductAddedMessage(itemName);
-      } else {
-        _showProductErrorMessage(itemName);
-      }
-    } catch (e) {
-      print('Error adding product $itemCode: $e');
-      _showProductErrorMessage(itemName);
-    }
+    // Use unified logic: add 1 quantity
+    await _updateProductQuantity(itemCode, itemName, unitPrice, 1);
   }
 
   Future<void> _addProductByBarcode(String barcode) async {
-    if (_cartId == null) {
-      _showErrorMessage();
-      return;
-    }
-
-    try {
-      final cartData = await ApiService.addItemToCart(
-        cartId: _cartId!,
-        itemCode: barcode,
-        quantity: 1,
-        unitPrice: null,
-      );
-
-      if (cartData != null) {
-        _syncCartFromApiData(cartData);
-        await _refreshTaxRateFromApi();
-
-        String itemName = barcode;
-        final items = cartData['lineItems'];
-        if (items is List && items.isNotEmpty) {
-          final matched = items.firstWhere(
-            (it) => (it['itemCode']?.toString() ?? '') == barcode,
-            orElse: () => items.last,
-          );
-          itemName = matched['itemName']?.toString() ?? itemName;
-        }
-
-        _showProductAddedMessage(itemName);
-      } else {
-        _showProductErrorMessage(barcode);
-      }
-    } catch (e) {
-      print('Error adding product by barcode $barcode: $e');
-      _showProductErrorMessage(barcode);
-    }
+    // Use unified logic: add 1 quantity
+    // Note: We'll get the actual item name from the API response
+    await _updateProductQuantity(barcode, barcode, null, 1);
   }
 
   void _syncCartFromApiData(Map<String, dynamic> cartData) {
+    print('[_syncCartFromApiData] Starting sync with cart data');
     final items = cartData['lineItems'];
     if (items is List) {
+      print('[_syncCartFromApiData] Found ${items.length} line items');
       final Map<String, CartItem> itemMap = {};
       
       for (final item in items) {
@@ -333,29 +382,50 @@ class _ShoppingPageState extends State<ShoppingPage> {
         final String itemCode = item['itemCode']?.toString() ?? '';
         final double unitPrice = (item['unitPrice'] as num?)?.toDouble() ?? 0.0;
         final int quantity = (item['quantity'] as num?)?.toInt() ?? 1;
+        final bool isUnitPriceChanged = item['isUnitPriceChanged'] ?? false;
+        final double unitPriceOriginal = (item['unitPriceOriginal'] as num?)?.toDouble() ?? unitPrice;
+        final int? lineNo = (item['lineNo'] as num?)?.toInt();
 
         final Map<String, dynamic> product = {
           'name': itemName,
           'price': unitPrice.toInt(),
           'code': itemCode,
+          'isUnitPriceChanged': isUnitPriceChanged,
+          'unitPriceOriginal': unitPriceOriginal,
         };
 
-        // Use product name as key to merge same products
-        final String key = itemName;
+        // Use product code as key to merge same products (more reliable than name)
+        final String key = itemCode.isNotEmpty ? itemCode : itemName;
+        print('[_syncCartFromApiData] Processing item: $itemName ($itemCode), lineNo: $lineNo, qty: $quantity, key: $key');
+        
         if (itemMap.containsKey(key)) {
+          print('[_syncCartFromApiData] Merging with existing item. Old qty: ${itemMap[key]!.quantity}, adding: $quantity');
           itemMap[key]!.quantity += quantity;
+          // Collect all lineNos for this product
+          if (lineNo != null) {
+            itemMap[key]!.lineNos = List.from(itemMap[key]!.lineNos)..add(lineNo);
+          }
+          print('[_syncCartFromApiData] After merge: qty: ${itemMap[key]!.quantity}, lineNos: ${itemMap[key]!.lineNos}');
         } else {
+          print('[_syncCartFromApiData] Creating new item entry');
           itemMap[key] = CartItem(
             product: product,
             quantity: quantity,
             taxRate: _guessTaxRateForProduct(product),
+            lineNos: lineNo != null ? [lineNo] : [],
           );
         }
       }
 
+      print('[_syncCartFromApiData] Final itemMap has ${itemMap.length} unique products');
+      itemMap.forEach((key, item) {
+        print('[_syncCartFromApiData] Product: ${item.product['name']}, qty: ${item.quantity}, lineNos: ${item.lineNos}');
+      });
+
       setState(() {
         _cartItems = itemMap.values.toList();
       });
+      print('[_syncCartFromApiData] Updated _cartItems, now has ${_cartItems.length} items');
     }
   }
 
@@ -387,6 +457,23 @@ class _ShoppingPageState extends State<ShoppingPage> {
           ),
         ),
         backgroundColor: Colors.orange,
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _showQuantityUpdatedMessage(String itemName, String action) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '$itemNameの数量を${action}しました。',
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: Colors.green,
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
       ),
@@ -1136,7 +1223,7 @@ class _ShoppingPageState extends State<ShoppingPage> {
                 // Product badges
                 Wrap(
                   spacing: 8,
-                  children: _getProductBadges(product['name']),
+                  children: _getProductBadges(product),
                 ),
               ],
             ),
@@ -1175,7 +1262,7 @@ class _ShoppingPageState extends State<ShoppingPage> {
             children: [
               // Up arrow
               GestureDetector(
-                onTap: () => _addToCart(product),
+                onTap: () => _incrementQuantity(index),
                 child: Container(
                   width: 40,
                   height: 40,
@@ -1193,7 +1280,7 @@ class _ShoppingPageState extends State<ShoppingPage> {
               const SizedBox(height: 8),
               // Down arrow
               GestureDetector(
-                onTap: () => _removeFromCart(index),
+                onTap: () => _decrementQuantity(index),
                 child: Container(
                   width: 40,
                   height: 40,
@@ -1215,15 +1302,27 @@ class _ShoppingPageState extends State<ShoppingPage> {
     );
   }
 
-  List<Widget> _getProductBadges(String productName) {
+  List<Widget> _getProductBadges(Map<String, dynamic> product) {
     List<Widget> badges = [];
+    
+    final String productName = product['name'] ?? '';
+    
+    // Check for price change (discount) from API data
+    final bool isUnitPriceChanged = product['isUnitPriceChanged'] ?? false;
+    if (isUnitPriceChanged) {
+      final double originalPrice = (product['unitPriceOriginal'] as num?)?.toDouble() ?? 0.0;
+      final double currentPrice = (product['price'] as num?)?.toDouble() ?? 0.0;
+      final int discountAmount = (originalPrice - currentPrice).round();
+      
+      if (discountAmount > 0) {
+        badges.addAll(_buildSeparateDiscountBadges(discountAmount));
+      }
+    }
     
     // Add badges based on product name (simulating different product types)
     if (productName.contains('赤兎馬') || productName.contains('梅酒')) {
       badges.add(_buildBadge('20禁', const Color(0xFF6B9BD8)));
       badges.add(_buildBadge('防犯', Colors.green));
-    } else if (productName.contains('シャツ')) {
-      badges.add(_buildBadge('値引', Colors.pink));
     } else if (productName.contains('田舎わっぱ飯')) {
       badges.add(_buildBadge('10倍', Colors.yellow));
       badges.add(_buildBadge('キャンペーン', Colors.orange));
@@ -1253,6 +1352,41 @@ class _ShoppingPageState extends State<ShoppingPage> {
       ),
     );
   }
+
+  List<Widget> _buildSeparateDiscountBadges(int discountAmount) {
+    return [
+      // 値引 badge with background color
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.pink,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: const Text(
+          '値引',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+      // Discount amount without background color, aligned to bottom
+      Container(
+        padding: const EdgeInsets.only(top: 4), // Add top padding to push down
+        child: Text(
+          ' -$discountAmount円',
+          style: const TextStyle(
+            color: Colors.black,
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    ];
+  }
+
+
 }
 
 class ArrowPainter extends CustomPainter {

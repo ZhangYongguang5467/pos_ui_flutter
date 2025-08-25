@@ -1,3 +1,9 @@
+
+
+
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMDAxNTE4MSIsInRlbmFudF9pZCI6IjAwMDEiLCJpc19zdXBlcnVzZXIiOnRydWUsImV4cCI6MTc1NjEwNTA2OH0.WPyQ_QXdmgd56kRczeRVv8gtCBsL3SVIV4SHx095xEo
+
+
 # Create Cart
 curl --location 'http://localhost:8003/api/v1/carts?terminal_id=demo_tenant-STORE001-1' \
 --header 'X-API-Key: 1px1jTk-rSxJVQB0A89o_N4stNUN_hi22gj9fqtnw4U' \

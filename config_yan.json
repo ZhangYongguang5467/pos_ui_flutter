@@ -1,0 +1,12 @@
+{
+  "api": {
+    "baseUrl": "http://172.17.99.39:8003/api/v1",
+    "apiKey": "z7EdmoHl0cr0evn96Yi7hiY97nI9Kolar9c-nO7uCgU",
+    "terminalId": "0001-27-169"
+  },
+  "printer": {
+    "serviceUrl": "http://localhost/cgi-bin/epos/service.cgi",
+    "deviceId": "local_printer",
+    "timeoutMs": 10000
+  }
+} 
