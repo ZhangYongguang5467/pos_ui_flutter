@@ -1223,7 +1223,7 @@ class _ShoppingPageState extends State<ShoppingPage> {
                 // Product badges
                 Wrap(
                   spacing: 8,
-                  children: _getProductBadges(product),
+                  children: _getProductBadges(product, cartItem.quantity),
                 ),
               ],
             ),
@@ -1302,7 +1302,7 @@ class _ShoppingPageState extends State<ShoppingPage> {
     );
   }
 
-  List<Widget> _getProductBadges(Map<String, dynamic> product) {
+  List<Widget> _getProductBadges(Map<String, dynamic> product, int quantity) {
     List<Widget> badges = [];
     
     final String productName = product['name'] ?? '';
@@ -1312,10 +1312,11 @@ class _ShoppingPageState extends State<ShoppingPage> {
     if (isUnitPriceChanged) {
       final double originalPrice = (product['unitPriceOriginal'] as num?)?.toDouble() ?? 0.0;
       final double currentPrice = (product['price'] as num?)?.toDouble() ?? 0.0;
-      final int discountAmount = (originalPrice - currentPrice).round();
+      final int unitDiscountAmount = (originalPrice - currentPrice).round();
+      final int totalDiscountAmount = unitDiscountAmount * quantity; // Total discount for all quantities
       
-      if (discountAmount > 0) {
-        badges.addAll(_buildSeparateDiscountBadges(discountAmount));
+      if (totalDiscountAmount > 0) {
+        badges.addAll(_buildSeparateDiscountBadges(totalDiscountAmount));
       }
     }
     
