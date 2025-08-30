@@ -37,7 +37,7 @@ jobs:
       run: flutter pub get
     
     - name: Build Windows with Shorebird (Release)
-      run: shorebird release windows --force
+      run: shorebird release windows --no-confirm
     
     - name: List build outputs
       shell: pwsh
