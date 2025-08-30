@@ -26,8 +26,8 @@ jobs:
         echo "$HOME/.shorebird/bin" >> $GITHUB_PATH
       shell: bash
     
-    - name: Authenticate Shorebird
-      run: echo "${{ secrets.SHOREBIRD_TOKEN }}" | shorebird login --no-prompt
+    - name: Set Shorebird Token
+      run: echo "SHOREBIRD_TOKEN=${{ secrets.SHOREBIRD_TOKEN }}" >> $GITHUB_ENV
       shell: bash
     
     - name: Enable Windows desktop
