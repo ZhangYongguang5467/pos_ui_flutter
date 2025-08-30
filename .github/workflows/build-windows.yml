@@ -33,22 +33,18 @@ jobs:
     - name: Enable Windows desktop
       run: flutter config --enable-windows-desktop
     
-    - name: Get dependencies
-      run: flutter pub get
+    - name: Initialize Shorebird app
+      run: shorebird init --force --display-name "POS UI Flutter"
     
-    - name: Initialize Shorebird app (if needed)
+    - name: Add shorebird.yaml to assets
       run: |
-        if (!(Test-Path "shorebird.yaml")) {
-          shorebird init --force --display-name "POS UI Flutter"
-        } else {
-          Write-Host "shorebird.yaml already exists, checking app..."
-          $appExists = shorebird apps list 2>&1 | Select-String "pos-ui-flutter"
-          if (!$appExists) {
-            Write-Host "Creating Shorebird app..."
-            shorebird apps create --display-name "POS UI Flutter"
-          }
-        }
+        $content = Get-Content pubspec.yaml -Raw
+        $content = $content -replace '(\s+assets:\s*\n\s+- config\.json)', '$1`n    - shorebird.yaml'
+        Set-Content pubspec.yaml $content
       shell: powershell
+    
+    - name: Get dependencies with Shorebird config
+      run: flutter pub get
     
     - name: Build Windows with Shorebird (Release)
       run: shorebird release windows --no-confirm
