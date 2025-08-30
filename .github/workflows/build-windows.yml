@@ -36,6 +36,20 @@ jobs:
     - name: Get dependencies
       run: flutter pub get
     
+    - name: Initialize Shorebird app (if needed)
+      run: |
+        if (!(Test-Path "shorebird.yaml")) {
+          shorebird init --force --display-name "POS UI Flutter"
+        } else {
+          Write-Host "shorebird.yaml already exists, checking app..."
+          $appExists = shorebird apps list 2>&1 | Select-String "pos-ui-flutter"
+          if (!$appExists) {
+            Write-Host "Creating Shorebird app..."
+            shorebird apps create --display-name "POS UI Flutter"
+          }
+        }
+      shell: powershell
+    
     - name: Build Windows with Shorebird (Release)
       run: shorebird release windows --no-confirm
     
