@@ -20,14 +20,24 @@ jobs:
         flutter-version: '3.32.8'
         channel: 'stable'
     
+    - name: Setup Shorebird CLI
+      run: |
+        curl -sL https://raw.githubusercontent.com/shorebirdtech/install/main/install.sh | bash
+        echo "$HOME/.shorebird/bin" >> $GITHUB_PATH
+      shell: bash
+    
+    - name: Authenticate Shorebird
+      run: echo "${{ secrets.SHOREBIRD_TOKEN }}" | shorebird login --no-prompt
+      shell: bash
+    
     - name: Enable Windows desktop
       run: flutter config --enable-windows-desktop
     
     - name: Get dependencies
       run: flutter pub get
     
-    - name: Build Windows (Release)
-      run: flutter build windows --release
+    - name: Build Windows with Shorebird (Release)
+      run: shorebird release windows --force
     
     - name: List build outputs
       shell: pwsh
@@ -39,7 +49,7 @@ jobs:
           Write-Host "build/windows does not exist"
         }
     
-    - name: Find Release directory
+    - name: Find Shorebird Release directory
       id: find_release
       shell: pwsh
       run: |

@@ -1,0 +1,3 @@
+# Shorebird configuration for POS UI Flutter
+# You will need to run `shorebird init` in CI to get the actual app_id
+app_id: pos-ui-flutter
