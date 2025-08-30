@@ -20,6 +20,12 @@ jobs:
         flutter-version: '3.32.8'
         channel: 'stable'
     
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+    
     - name: Setup Shorebird CLI
       uses: shorebirdtech/setup-shorebird@v1
     
@@ -32,6 +38,9 @@ jobs:
     
     - name: Enable Windows desktop
       run: flutter config --enable-windows-desktop
+    
+    - name: Run shorebird doctor
+      run: shorebird doctor
     
     - name: Initialize Shorebird app
       run: shorebird init --force --display-name "POS UI Flutter"
