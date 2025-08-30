@@ -33,6 +33,9 @@ jobs:
     - name: Get dependencies
       run: flutter pub get
     
+    - name: Initialize Shorebird app
+      run: shorebird init --force --display-name "POS UI Flutter"
+    
     - name: Build Windows with Shorebird (Release)
       run: shorebird release windows --force
     
