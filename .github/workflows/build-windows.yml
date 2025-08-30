@@ -27,14 +27,14 @@ jobs:
       run: echo "SHOREBIRD_TOKEN=${{ secrets.SHOREBIRD_TOKEN }}" >> $env:GITHUB_ENV
       shell: powershell
     
+    - name: Configure Git for long paths
+      run: git config --system core.longpaths true
+    
     - name: Enable Windows desktop
       run: flutter config --enable-windows-desktop
     
     - name: Get dependencies
       run: flutter pub get
-    
-    - name: Initialize Shorebird app
-      run: shorebird init --force --display-name "POS UI Flutter"
     
     - name: Build Windows with Shorebird (Release)
       run: shorebird release windows --force
